@@ -1,25 +1,31 @@
 :root {
-  --font-color: #333;
-  --bg: #f5f5f5;
-  --title-color: #2c3e50;
-  --card-bg: #fff;
-  --label-color: #7f8c8d;
-  --border-color: #eee;
-  --accent-color: rgb(110, 154, 130);
-  --accent-hover-color: #5a8c73;
-  --shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --font-color: #0a0a0a;
+  --bg: #ffffff;
+  --title-color: #0a0a0a;
+  --card-bg: #ffffff;
+  --label-color: #737373;
+  --border-color: #e5e5e5;
+  --accent-color: #0a0a0a;
+  --accent-hover-color: #404040;
+  --btn-fg: #ffffff;
+  --hover-fill: rgba(0, 0, 0, 0.05);
+  --code-bg: #f4f4f4;
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --font-color: #f5f5f5;
-    --bg: #2b2b2b;
-    --title-color: #ecf0f1;
-    --card-bg: #3a3a3a;
-    --label-color: #bdc3c7;
-    --border-color: #555;
-    --shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    --font-color: #fcfcfc;
+    --bg: #000000;
+    --title-color: #fcfcfc;
+    --card-bg: #0a0a0a;
+    --label-color: #9e9e9e;
+    --border-color: #262626;
+    --accent-color: #fcfcfc;
+    --accent-hover-color: #d4d4d4;
+    --btn-fg: #0a0a0a;
+    --hover-fill: rgba(255, 255, 255, 0.06);
+    --code-bg: #171717;
     color-scheme: dark;
   }
 }
@@ -58,7 +64,7 @@ header.hero {
   align-items: center;
   gap: 12px;
   flex-wrap: wrap;
-  border-bottom: 2px solid var(--accent-color);
+  border-bottom: 1px solid var(--border-color);
   padding-bottom: 10px;
 }
 
@@ -66,7 +72,8 @@ header.hero h1 {
   margin: 0;
   color: var(--title-color);
   font-size: 1.7rem;
-  font-weight: 700;
+  font-weight: 600;
+  letter-spacing: -0.03em;
   line-height: 1.2;
 }
 
@@ -78,15 +85,15 @@ header.hero h1 {
 }
 
 .hero-link {
-  color: var(--accent-color);
+  color: var(--label-color);
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 500;
   text-decoration: none;
   white-space: nowrap;
 }
 
 .hero-link:hover {
-  color: var(--accent-hover-color);
+  color: var(--font-color);
   text-decoration: underline;
 }
 
@@ -110,9 +117,9 @@ header.hero h1 {
 
 .card {
   background: var(--card-bg);
-  border-radius: 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
   padding: 24px;
-  box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
 }
@@ -121,6 +128,8 @@ header.hero h1 {
   margin: 0 0 8px;
   color: var(--title-color);
   font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }
 
 .project-tagline {
@@ -138,8 +147,9 @@ header.hero h1 {
   margin: 6px 0;
 }
 
-.features code {
-  background: var(--border-color);
+.features code,
+.install-note code {
+  background: var(--code-bg);
   border-radius: 4px;
   padding: 1px 5px;
   font-size: 0.9em;
@@ -154,9 +164,8 @@ header.hero h1 {
 .btn {
   display: inline-block;
   text-decoration: none;
-  color: #fff;
   border: none;
-  border-radius: 4px;
+  border-radius: 999px;
   cursor: pointer;
   font-size: 0.95em;
   font-weight: 600;
@@ -165,6 +174,7 @@ header.hero h1 {
 
 .btn-primary {
   background: var(--accent-color);
+  color: var(--btn-fg);
 }
 
 .btn-primary:hover {
@@ -178,8 +188,81 @@ header.hero h1 {
 }
 
 .btn-ghost:hover {
-  border-color: var(--accent-color);
-  color: var(--accent-color);
+  background: var(--hover-fill);
+  border-color: var(--font-color);
+}
+
+.install {
+  margin-top: 20px;
+  scroll-margin-top: 16px;
+}
+
+.install-note {
+  margin: 0 0 16px;
+  color: var(--label-color);
+}
+
+.install-block {
+  position: relative;
+  margin-top: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+.install-head {
+  padding: 8px 72px 8px 12px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.install-label {
+  margin: 0;
+}
+
+.install-os {
+  display: block;
+  font-weight: 600;
+  color: var(--title-color);
+}
+
+.install-hint {
+  display: block;
+  margin-top: 2px;
+  color: var(--label-color);
+  font-size: 0.85em;
+}
+
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-family: inherit;
+  background: var(--bg);
+  color: var(--font-color);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.8em;
+  font-weight: 600;
+  padding: 4px 10px;
+}
+
+.copy-btn:hover {
+  background: var(--hover-fill);
+  border-color: var(--font-color);
+}
+
+.install-code {
+  margin: 0;
+  padding: 12px 14px;
+  overflow-x: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.8rem;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: var(--font-color);
 }
 
 footer.site-foot {
@@ -194,6 +277,6 @@ footer.site-foot a {
 }
 
 footer.site-foot a:hover {
-  color: var(--accent-color);
+  color: var(--font-color);
   text-decoration: underline;
 }
