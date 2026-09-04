@@ -6,10 +6,8 @@ const REPO = {
 };
 
 const INSTALL = {
-  macos: `brew install --cask calibre
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/yibeilahei/cookbook/main/install.sh)"`,
-  windows: `winget install -e --id calibre.calibre
-powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/yibeilahei/cookbook/main/install.ps1 | iex"`,
+  calibre: "brew install --cask calibre",
+  cookbook: `/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/yibeilahei/cookbook/main/install.sh)"`,
 };
 
 export default function HomePage() {
@@ -29,7 +27,7 @@ export default function HomePage() {
         </div>
         <p className="lede">
           Open-source tools for Xteink e-readers: firmware that replaces the
-          stock reader, and a desktop app that prepares your books for it.
+          stock reader, and a macOS app that prepares your books for it.
         </p>
       </header>
 
@@ -61,15 +59,14 @@ export default function HomePage() {
           <section className="card project">
             <h2>Cookbook</h2>
             <p className="project-tagline">
-              A desktop app (macOS and Windows) that converts ebooks and PDFs
-              for eink readers.
+              A macOS app that converts ebooks and PDFs for eink readers.
             </p>
             <ul className="features">
               <li><code>.xtch</code> output for Xteink / CrossPoint devices</li>
               <li>Panel-sized PDF output for Kindle, Sony DPT, and other readers</li>
               <li>Drag and drop ebooks, PDFs, or whole folders to convert in a batch</li>
               <li>Editable device presets, per-book language detection, and CJK romanization for filenames</li>
-              <li>Calibre-powered ebook → PDF conversion, plus a bundled packer for PDF → XTCH</li>
+              <li>Calibre-powered ebook → PDF conversion; PDF → <code>.xtch</code> is packed in Swift</li>
             </ul>
             <div className="actions">
               <a className="btn btn-primary" href="#install">
@@ -85,20 +82,19 @@ export default function HomePage() {
         <section id="install" className="card install">
           <h2>Install Cookbook</h2>
           <p className="install-note">
-            Builds are unsigned — a browser download is blocked by Gatekeeper or
-            SmartScreen. Paste the command for your OS instead. Calibre is
-            required for ebook → PDF conversion (not for PDF →{" "}
-            <code>.xtch</code>); skip that line if it is already installed.
+            macOS only. Cookbook builds are unsigned — a browser-downloaded{" "}
+            <code>.dmg</code> is blocked by Gatekeeper. Paste each command in
+            Terminal.
           </p>
           <InstallCommand
-            label="macOS"
-            hint="paste in Terminal"
-            command={INSTALL.macos}
+            label="Calibre"
+            hint="skip if already installed — needed for ebook → PDF, not PDF → .xtch"
+            command={INSTALL.calibre}
           />
           <InstallCommand
-            label="Windows"
-            hint="paste in PowerShell or cmd"
-            command={INSTALL.windows}
+            label="Cookbook"
+            hint="copies Cookbook.app to ~/Applications and opens it"
+            command={INSTALL.cookbook}
           />
         </section>
       </main>

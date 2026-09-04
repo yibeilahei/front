@@ -1,7 +1,7 @@
 # lazahata
 
 Static homepage for the **lazahata** project: open-source XTCH reader
-firmware for Xteink X3/X4 e-readers, and **cookbook**, a desktop app that
+firmware for Xteink X3/X4 e-readers, and **cookbook**, a macOS app that
 converts ebooks/PDFs into `.xtch` or panel-sized PDFs.
 
 - Firmware: https://github.com/yibeilahei/lazahata
