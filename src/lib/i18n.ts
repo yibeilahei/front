@@ -473,11 +473,13 @@ const LOCALE_PREFIXES: [string, Locale][] = [
 ];
 
 export function detectLocale(lang?: string): Locale {
-  const raw =
-    lang ||
-    (typeof navigator !== "undefined"
+  // Node 21+ exposes `navigator` (and CI is usually en-US). Only trust a
+  // real browser so SSR, tests, and prerender keep DEFAULT_LOCALE.
+  const fromBrowser =
+    typeof window !== "undefined" && typeof navigator !== "undefined"
       ? navigator.languages?.[0] || navigator.language
-      : DEFAULT_LOCALE);
+      : undefined;
+  const raw = lang || fromBrowser || DEFAULT_LOCALE;
   const lower = String(raw || DEFAULT_LOCALE).toLowerCase();
   for (const [prefix, id] of LOCALE_PREFIXES) {
     if (lower === prefix || lower.startsWith(prefix + "-")) return id;
