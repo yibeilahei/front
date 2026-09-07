@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { InstallCommand } from "./install-command";
 
 const REPO = {
@@ -17,6 +18,9 @@ export default function HomePage() {
         <div className="hero-top">
           <h1>lazahata</h1>
           <div className="hero-links">
+            <Link className="hero-link" href="/convert/">
+              Convert
+            </Link>
             <a className="hero-link" href={REPO.firmware}>
               Firmware on GitHub
             </a>
@@ -27,7 +31,8 @@ export default function HomePage() {
         </div>
         <p className="lede">
           Open-source tools for Xteink e-readers: firmware that replaces the
-          stock reader, and a macOS app that prepares your books for it.
+          stock reader, a macOS app that prepares your books for it, and a
+          converter that runs in the browser.
         </p>
       </header>
 
@@ -78,6 +83,28 @@ export default function HomePage() {
             </div>
           </section>
         </div>
+
+        <section className="card project web-convert">
+          <h2>Convert in the browser</h2>
+          <p className="project-tagline">
+            EPUB, TXT, MOBI, and FB2 to <code>.xtch</code> — nothing uploaded,
+            no install. A lighter alternative when you do not need Cookbook.
+          </p>
+          <ul className="features">
+            <li>Runs entirely in the browser; files stay on your computer</li>
+            <li>Preview the first 20 pages, then convert and download the full book</li>
+            <li>No PDF or folder batches — Cookbook on macOS for those</li>
+            <li>Works best in Chrome</li>
+          </ul>
+          <div className="actions">
+            <Link className="btn btn-primary" href="/convert/">
+              Open converter
+            </Link>
+            <a className="btn btn-ghost" href="#install">
+              Cookbook for PDFs
+            </a>
+          </div>
+        </section>
 
         <section id="install" className="card install">
           <h2>Install Cookbook</h2>

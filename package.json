@@ -3,12 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "predev": "npm run build:worker",
     "dev": "next dev",
+    "prebuild": "npm run build:worker",
     "build": "next build",
+    "build:worker": "esbuild src/lib/xtchEncodeWorker.ts --bundle --format=esm --target=es2020 --outfile=public/xtchEncodeWorker.js",
     "start": "npx --yes serve out",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "node --experimental-strip-types --test tests/xtch.test.mjs tests/detectVertical.test.mjs tests/i18n.test.mjs tests/fonts.test.mjs tests/txt.test.mjs tests/mobi.test.mjs tests/fb2.test.mjs tests/verticalPages.test.mjs tests/jobs.test.mjs"
   },
   "dependencies": {
+    "fflate": "^0.8.3",
+    "foliate-js": "^1.0.1",
+    "html-to-image": "^1.11.13",
+    "jszip": "^3.10.1",
     "next": "16.3.1",
     "react": "19.2.8",
     "react-dom": "19.2.8"
@@ -17,6 +25,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "esbuild": "^0.28.2",
     "eslint": "^9",
     "eslint-config-next": "16.3.1",
     "typescript": "^5"

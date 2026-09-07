@@ -148,7 +148,8 @@ header.hero h1 {
 }
 
 .features code,
-.install-note code {
+.install-note code,
+.project-tagline code {
   background: var(--code-bg);
   border-radius: 4px;
   padding: 1px 5px;
@@ -190,6 +191,10 @@ header.hero h1 {
 .btn-ghost:hover {
   background: var(--hover-fill);
   border-color: var(--font-color);
+}
+
+.web-convert {
+  margin-top: 20px;
 }
 
 .install {
