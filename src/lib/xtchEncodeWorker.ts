@@ -15,6 +15,7 @@ export type EncodeRequest = {
   buffer: ArrayBuffer;
   width: number;
   height: number;
+  compress?: boolean;
 };
 
 export type EncodeResponse = {
@@ -31,10 +32,10 @@ type WorkerSelf = {
 const ctx = self as unknown as WorkerSelf;
 
 ctx.onmessage = async (ev: MessageEvent<EncodeRequest>) => {
-  const { id, buffer, width, height } = ev.data;
+  const { id, buffer, width, height, compress } = ev.data;
   try {
     const data = new Uint8Array(buffer);
-    const bytes = await encodeXthPage(data, width, height);
+    const bytes = await encodeXthPage(data, width, height, { compress });
     ctx.postMessage({ id, bytes }, [bytes.buffer]);
   } catch (err) {
     ctx.postMessage({ id, error: err instanceof Error ? err.message : String(err) });

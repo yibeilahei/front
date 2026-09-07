@@ -7,6 +7,7 @@ import {
   fontChoice,
   pickUsedFontFamily,
   preferredFontGroups,
+  fontDisplayName,
   SCRIPT_GROUP_LABELS,
   type ScriptId,
 } from "@/lib/fonts";
@@ -17,22 +18,13 @@ import {
   systemLanguage,
   type TxtEncodingId,
 } from "@/lib/adapters/txt";
-import { resolveLocale, t, type MessageKey } from "@/lib/i18n";
+import { DEFAULT_LOCALE, detectLocale, t, type Locale, type MessageKey } from "@/lib/i18n";
 import type { PersistSettings, ResolvedWritingMode, WritingMode } from "@/lib/types";
 
 const FONT_GROUP_KEYS: Record<string, MessageKey> = {
   latin: "fontGroupLatin",
   jp: "fontGroupJp",
-  sc: "fontGroupSc",
   tc: "fontGroupTc",
-  kr: "fontGroupKr",
-  cyrl: "fontGroupCyrl",
-  arab: "fontGroupArab",
-  hebr: "fontGroupHebr",
-  thai: "fontGroupThai",
-  deva: "fontGroupDeva",
-  taml: "fontGroupTaml",
-  beng: "fontGroupBeng",
 };
 
 type BookWriting = {
@@ -60,19 +52,19 @@ function fontDesc(
   book: BookWriting | null,
   fontId: string,
   family: string,
-  locale: ReturnType<typeof resolveLocale>,
+  locale: Locale,
 ): string {
   if (!book) return t("writingDetectOnDrop", undefined, locale);
   if (book.choice === "auto" && book.axis == null && !family) {
     return t("writingDetecting", undefined, locale);
   }
   if (fontId === "auto") {
-    return t("writingThisBook", { mode: family || t("fontAuto", undefined, locale) }, locale);
+    return t("writingThisBook", { mode: family ? fontDisplayName(family, locale) : t("fontAuto", undefined, locale) }, locale);
   }
   return t("writingOverride", undefined, locale);
 }
 
-function groupLabel(id: string, locale: ReturnType<typeof resolveLocale>): string {
+function groupLabel(id: string, locale: Locale): string {
   const key = FONT_GROUP_KEYS[id];
   if (key) return t(key, undefined, locale);
   return SCRIPT_GROUP_LABELS[id] || id;
@@ -104,7 +96,7 @@ function withCurrentFont(groups: ReturnType<typeof preferredFontGroups>, fontId:
 
 function writingDesc(
   book: BookWriting | null,
-  locale: ReturnType<typeof resolveLocale>,
+  locale: Locale,
 ): string {
   if (!book) return t("writingDetectOnDrop", undefined, locale);
   if (book.choice === "auto" && book.axis == null) {
@@ -133,7 +125,7 @@ export function SettingsPanel({
   writingDisabled,
 }: Props) {
   const isClient = useSyncExternalStore(subscribeNoop, clientSnapshot, serverSnapshot);
-  const locale = resolveLocale(settings.locale, isClient ? undefined : "en");
+  const locale = detectLocale(isClient ? undefined : DEFAULT_LOCALE);
   const vertical = bookWriting?.axis === "vertical";
   const writingLocked = !bookWriting || writingDisabled;
   const fontLocked = !bookWriting || writingDisabled;
@@ -143,13 +135,13 @@ export function SettingsPanel({
   );
   const fontGroups = useMemo(() => {
     const groups = preferredFontGroups(
-      settings.locale === "auto" ? undefined : settings.locale,
+      undefined,
       isClient ? navigator.language : undefined,
       bookScript,
       installedIds,
     );
     return withCurrentFont(groups, bookFontId);
-  }, [settings.locale, bookScript, installedIds, bookFontId, isClient]);
+  }, [bookScript, installedIds, bookFontId, isClient]);
   const autoFamily =
     isClient && bookScript
       ? pickUsedFontFamily("auto", bookScript)
@@ -203,7 +195,7 @@ export function SettingsPanel({
                 <optgroup key="auto" label={t("fontAuto", undefined, locale)}>
                   <option value="auto">
                     {autoFamily
-                      ? `${t("fontAuto", undefined, locale)} · ${autoFamily}`
+                      ? `${t("fontAuto", undefined, locale)} · ${fontDisplayName(autoFamily, locale)}`
                       : t("fontAuto", undefined, locale)}
                   </option>
                 </optgroup>
@@ -215,7 +207,7 @@ export function SettingsPanel({
                   const choice = isClient ? bookFontChoice(id) : fontChoice(id);
                   return (
                     <option key={choice.id} value={choice.id}>
-                      {choice.family}
+                      {fontDisplayName(choice.family, locale)}
                     </option>
                   );
                 })}
@@ -374,31 +366,6 @@ export function SettingsPanel({
 
       <div className="setting-row">
         <div>
-          <div className="setting-title">{t("readDirection", undefined, locale)}</div>
-          <div className="setting-desc">{t("readDirectionDesc", undefined, locale)}</div>
-        </div>
-        <div className={`seg${writingDisabled ? " disabled" : ""}`}>
-          <button
-            type="button"
-            disabled={writingDisabled}
-            className={settings.readDirection === 0 ? "active" : ""}
-            onClick={() => onChange({ readDirection: 0 })}
-          >
-            {t("ltr", undefined, locale)}
-          </button>
-          <button
-            type="button"
-            disabled={writingDisabled}
-            className={settings.readDirection === 1 ? "active" : ""}
-            onClick={() => onChange({ readDirection: 1 })}
-          >
-            {t("rtl", undefined, locale)}
-          </button>
-        </div>
-      </div>
-
-      <div className="setting-row">
-        <div>
           <div className="setting-title">{t("nameFromTitle", undefined, locale)}</div>
           <div className="setting-desc">{t("nameFromTitleDesc", undefined, locale)}</div>
         </div>
@@ -407,6 +374,22 @@ export function SettingsPanel({
             type="checkbox"
             checked={settings.renameFromTitle}
             onChange={(e) => onChange({ renameFromTitle: e.target.checked })}
+          />
+          <span className="toggle-slider" />
+        </label>
+      </div>
+
+      <div className="setting-row">
+        <div>
+          <div className="setting-title">{t("pageCompression", undefined, locale)}</div>
+          <div className="setting-desc">{t("pageCompressionDesc", undefined, locale)}</div>
+        </div>
+        <label className="toggle">
+          <input
+            type="checkbox"
+            checked={settings.pageCompression}
+            disabled={writingDisabled}
+            onChange={(e) => onChange({ pageCompression: e.target.checked }, true)}
           />
           <span className="toggle-slider" />
         </label>

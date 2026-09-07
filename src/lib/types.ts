@@ -93,9 +93,8 @@ export type PersistSettings = {
   lineHeight: number;
   textAlign: number;
   hyphenation: number;
-  readDirection: number;
   renameFromTitle: boolean;
-  locale: import("./i18n").LocalePref;
+  pageCompression: boolean;
 };
 
 export type ConvertSettings = PersistSettings & {

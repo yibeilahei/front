@@ -15,6 +15,9 @@
 
 import type { EncodeRequest, EncodeResponse } from "./xtchEncodeWorker";
 
+/** Bump when the worker request contract changes so browsers skip a stale script. */
+const XTCH_ENCODE_PROTOCOL = 2;
+
 type PendingJob = {
   resolve: (bytes: Uint8Array) => void;
   reject: (err: Error) => void;
@@ -37,7 +40,10 @@ export class XtchEncodePool {
     // Pre-bundling with esbuild sidesteps that entirely.
     const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
     for (let i = 0; i < size; i++) {
-      const worker = new Worker(`${basePath}/xtchEncodeWorker.js`, { type: "module" });
+      const worker = new Worker(
+        `${basePath}/xtchEncodeWorker.js?v=${XTCH_ENCODE_PROTOCOL}`,
+        { type: "module" },
+      );
       worker.onmessage = (ev: MessageEvent<EncodeResponse>) => {
         const { id, bytes, error } = ev.data;
         const job = this.pending.get(id);
@@ -58,7 +64,12 @@ export class XtchEncodePool {
     }
   }
 
-  encode(data: Uint8ClampedArray | Uint8Array, width: number, height: number): Promise<Uint8Array> {
+  encode(
+    data: Uint8ClampedArray | Uint8Array,
+    width: number,
+    height: number,
+    compress = false,
+  ): Promise<Uint8Array> {
     const id = this.nextId++;
     const worker = this.workers[this.nextWorker];
     this.nextWorker = (this.nextWorker + 1) % this.workers.length;
@@ -69,7 +80,7 @@ export class XtchEncodePool {
     const buffer = copy.buffer as ArrayBuffer;
     return new Promise((resolve, reject) => {
       this.pending.set(id, { resolve, reject });
-      const req: EncodeRequest = { id, buffer, width, height };
+      const req: EncodeRequest = { id, buffer, width, height, compress };
       worker.postMessage(req, [buffer]);
     });
   }

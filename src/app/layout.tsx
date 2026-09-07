@@ -1,10 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import "./converter.css";
 
 export const metadata: Metadata = {
-  title: "lazahata — open firmware & macOS app for Xteink e-readers",
+  title: "lazahata — 本を XTCH に",
   description:
-    "lazahata: open-source XTCH reader firmware for the Xteink X3 / X4, a macOS app (cookbook) that converts ebooks and PDFs, and an in-browser converter.",
+    "ブラウザで EPUB、TXT、MOBI、FB2 を XTCH に変換します。ファイルはアップロードしません。",
 };
 
 export const viewport: Viewport = {
@@ -16,7 +17,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en">
+    <html lang="ja">
       <body>{children}</body>
     </html>
   );

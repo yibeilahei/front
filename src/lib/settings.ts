@@ -1,4 +1,3 @@
-import { normalizeLocalePref } from "./i18n";
 import type { DeviceProfile, PersistSettings, ConvertSettings, ResolvedWritingMode } from "./types";
 
 export const SETTINGS_KEY = "lazahata.xtch.settings.v1";
@@ -14,22 +13,23 @@ export const DEFAULT_SETTINGS: PersistSettings = {
   lineHeight: 120,
   textAlign: 3,
   hyphenation: 0,
-  readDirection: 0,
   renameFromTitle: false,
-  locale: "auto",
+  pageCompression: false,
 };
 
 export function loadSettings(): PersistSettings {
   try {
     const saved = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "null") || {};
     delete saved.fontId;
+    delete saved.locale;
+    delete saved.readDirection;
     delete saved.epubCrengine;
     delete saved._epubCrengineV2;
     delete saved._epubCrengineV3;
     return {
       ...DEFAULT_SETTINGS,
       ...saved,
-      locale: normalizeLocalePref(saved.locale),
+      pageCompression: saved.pageCompression === true,
     };
   } catch {
     return { ...DEFAULT_SETTINGS };

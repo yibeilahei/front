@@ -1,16 +1,15 @@
 # lazahata
 
-Static site for the **lazahata** project: open-source XTCH reader
-firmware for Xteink X3/X4 e-readers, **cookbook**, a macOS app that
-converts ebooks/PDFs into `.xtch` or panel-sized PDFs, and an
-in-browser converter at `/convert/`.
+Static site for the **lazahata** project. The homepage is an in-browser
+EPUB/TXT/MOBI/FB2 → `.xtch` converter. Firmware and **Cookbook** (a macOS
+app) have their own pages.
 
-- Firmware: https://github.com/yibeilahei/lazahata
-- Cookbook: https://github.com/yibeilahei/cookbook
-- Web converter: `/convert/` (this repo)
+- Converter: `/`
+- Firmware: `/firmware/` — https://github.com/yibeilahei/lazahata
+- Cookbook: `/cookbook/` — https://github.com/yibeilahei/cookbook
 
-This Next.js app **exports a static site** — no server, no uploads.
-The homepage is static; `/convert/` runs entirely in the browser.
+This Next.js app **exports a static site** — no server, no uploads. The
+converter runs entirely in the browser.
 
 ## Develop
 

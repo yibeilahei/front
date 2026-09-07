@@ -2,32 +2,8 @@
 
 import JSZip from "jszip";
 
-export type CjkFace = "jp" | "sc" | "tc" | "kr";
-export type ScriptId =
-  | "latin"
-  | CjkFace
-  | "cyrl"
-  | "grek"
-  | "arab"
-  | "hebr"
-  | "thai"
-  | "deva"
-  | "taml"
-  | "beng"
-  | "khmr"
-  | "mymr"
-  | "laoo"
-  | "geor"
-  | "armn"
-  | "ethi"
-  | "sinh"
-  | "gujr"
-  | "guru"
-  | "knda"
-  | "mlym"
-  | "telu"
-  | "orya"
-  | "tibt";
+export type CjkFace = "jp" | "tc";
+export type ScriptId = "latin" | CjkFace;
 
 export type FontSpec = {
   id: string;
@@ -45,7 +21,7 @@ export type FontChoice = {
 };
 
 export function isCjkFace(id: string | null | undefined): id is CjkFace {
-  return id === "jp" || id === "sc" || id === "tc" || id === "kr";
+  return id === "jp" || id === "tc";
 }
 
 export const LATIN_FONT: FontSpec = {
@@ -62,99 +38,32 @@ export const CJK_FONTS: Record<CjkFace, FontSpec> = {
     file: "NotoSerifJP-Regular.ttf",
     url: "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notoserifjp/NotoSerifJP%5Bwght%5D.ttf",
   },
-  sc: {
-    id: "sc",
-    family: "Noto Serif SC",
-    file: "NotoSerifSC-Regular.ttf",
-    url: "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notoserifsc/NotoSerifSC%5Bwght%5D.ttf",
-  },
   tc: {
     id: "tc",
     family: "Noto Serif TC",
     file: "NotoSerifTC-Regular.ttf",
     url: "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notoseriftc/NotoSerifTC%5Bwght%5D.ttf",
   },
-  kr: {
-    id: "kr",
-    family: "Noto Serif KR",
-    file: "NotoSerifKR-Regular.ttf",
-    url: "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notoserifkr/NotoSerifKR%5Bwght%5D.ttf",
-  },
 };
 
-export const CJK_ORDER: CjkFace[] = ["jp", "sc", "tc", "kr"];
-
-const NOTO_SERIF: FontSpec = {
-  id: "noto-serif",
-  family: "Noto Serif",
-  file: "NotoSerif-Regular.ttf",
-  url: "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notoserif/NotoSerif%5Bwdth%2Cwght%5D.ttf",
-};
-
-function notoSpec(id: string, family: string, folder: string, axes?: string): FontSpec {
-  const base = family.replace(/\s+/g, "");
-  const fileName = axes ? `${base}[${axes}].ttf` : `${base}-Regular.ttf`;
-  return {
-    id,
-    family,
-    file: `${base}-Regular.ttf`,
-    url: `https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/${folder}/${encodeURIComponent(fileName)}`,
-  };
-}
-
-const SCRIPT_CDN: Partial<Record<ScriptId, FontSpec>> = {
-  cyrl: NOTO_SERIF,
-  grek: NOTO_SERIF,
-  arab: notoSpec("noto-naskh", "Noto Naskh Arabic", "notonaskharabic", "wght"),
-  hebr: notoSpec("noto-hebr", "Noto Serif Hebrew", "notoserifhebrew", "wdth,wght"),
-  thai: notoSpec("noto-thai", "Noto Serif Thai", "notoserifthai", "wdth,wght"),
-  deva: notoSpec("noto-deva", "Noto Serif Devanagari", "notoserifdevanagari", "wdth,wght"),
-  taml: notoSpec("noto-taml", "Noto Serif Tamil", "notoseriftamil", "wdth,wght"),
-  beng: notoSpec("noto-beng", "Noto Serif Bengali", "notoserifbengali", "wdth,wght"),
-  khmr: notoSpec("noto-khmr", "Noto Serif Khmer", "notoserifkhmer", "wdth,wght"),
-  mymr: notoSpec("noto-mymr", "Noto Serif Myanmar", "notoserifmyanmar"),
-  laoo: notoSpec("noto-laoo", "Noto Serif Lao", "notoseriflao", "wdth,wght"),
-  geor: notoSpec("noto-geor", "Noto Serif Georgian", "notoserifgeorgian", "wdth,wght"),
-  armn: notoSpec("noto-armn", "Noto Serif Armenian", "notoserifarmenian", "wdth,wght"),
-  ethi: notoSpec("noto-ethi", "Noto Serif Ethiopic", "notoserifethiopic", "wdth,wght"),
-  sinh: notoSpec("noto-sinh", "Noto Serif Sinhala", "notoserifsinhala", "wdth,wght"),
-  gujr: notoSpec("noto-gujr", "Noto Serif Gujarati", "notoserifgujarati", "wght"),
-  guru: notoSpec("noto-guru", "Noto Serif Gurmukhi", "notoserifgurmukhi", "wght"),
-  knda: notoSpec("noto-knda", "Noto Serif Kannada", "notoserifkannada", "wdth,wght"),
-  mlym: notoSpec("noto-mlym", "Noto Serif Malayalam", "notoserifmalayalam", "wdth,wght"),
-  telu: notoSpec("noto-telu", "Noto Serif Telugu", "notoseriftelugu", "wdth,wght"),
-  orya: notoSpec("noto-orya", "Noto Serif Oriya", "notoseriforiya", "wght"),
-  tibt: notoSpec("noto-tibt", "Noto Serif Tibetan", "notoseriftibetan", "wght"),
-};
+export const CJK_ORDER: CjkFace[] = ["jp", "tc"];
 
 const SYSTEM_STACKS: Record<ScriptId, string[]> = {
   latin: ["Georgia", "Palatino Linotype", "Palatino", "Times New Roman", "Times", "Noto Serif"],
-  jp: ["Hiragino Mincho ProN", "Hiragino Mincho Pro", "Yu Mincho", "YuMincho", "MS Mincho", "MS PMincho", "Noto Serif JP"],
-  sc: ["Songti SC", "STSong", "SimSun", "NSimSun", "Noto Serif SC"],
+  jp: [
+    "Hiragino Mincho ProN",
+    "Hiragino Mincho ProN W3",
+    "HiraMinProN-W3",
+    "Hiragino Mincho Pro",
+    "Hiragino Mincho Pro W3",
+    "HiraMinPro-W3",
+    "Yu Mincho",
+    "YuMincho",
+    "MS Mincho",
+    "MS PMincho",
+    "Noto Serif JP",
+  ],
   tc: ["Songti TC", "LiSong Pro", "PMingLiU", "MingLiU", "Noto Serif TC"],
-  kr: ["AppleMyungjo", "Nanum Myeongjo", "Batang", "BatangChe", "Gungsuh", "Noto Serif KR"],
-  cyrl: ["Georgia", "Times New Roman", "Palatino", "PT Serif", "Noto Serif"],
-  grek: ["Georgia", "Times New Roman", "Palatino", "Noto Serif"],
-  arab: ["Geeza Pro", "Al Bayan", "Baghdad", "Traditional Arabic", "Arabic Typesetting", "Noto Naskh Arabic", "Noto Serif Arabic", "Segoe UI"],
-  hebr: ["Times New Roman", "Arial Hebrew", "New Peninim MT", "David", "Noto Serif Hebrew"],
-  thai: ["Thonburi", "Sathu", "Ayuthaya", "Krungthep", "Leelawadee UI", "Tahoma", "Noto Serif Thai"],
-  deva: ["ITF Devanagari", "Kohinoor Devanagari", "Devanagari MT", "Nirmala UI", "Mangal", "Noto Serif Devanagari"],
-  taml: ["Tamil MN", "InaiMathi", "Nirmala UI", "Latha", "Noto Serif Tamil"],
-  beng: ["Kohinoor Bangla", "Bangla MN", "Nirmala UI", "Vrinda", "Noto Serif Bengali"],
-  khmr: ["Khmer UI", "Leelawadee UI", "DaunPenh", "MoolBoran", "Khmer OS", "Noto Serif Khmer"],
-  mymr: ["Myanmar Text", "Myanmar MN", "Noto Serif Myanmar"],
-  laoo: ["Lao UI", "Lao MN", "Leelawadee UI", "DokChampa", "Noto Serif Lao"],
-  geor: ["Sylfaen", "Noto Serif Georgian"],
-  armn: ["Sylfaen", "Mshtakan", "Noto Serif Armenian"],
-  ethi: ["Ebrima", "Nyala", "Kefa", "Noto Serif Ethiopic"],
-  sinh: ["Iskoola Pota", "Nirmala UI", "Sinhala MN", "Noto Serif Sinhala"],
-  gujr: ["Shruti", "Nirmala UI", "Gujarati Sangam MN", "Noto Serif Gujarati"],
-  guru: ["Raavi", "Nirmala UI", "Gurmukhi MN", "Noto Serif Gurmukhi"],
-  knda: ["Tunga", "Nirmala UI", "Kannada Sangam MN", "Noto Serif Kannada"],
-  mlym: ["Kartika", "Nirmala UI", "Malayalam MN", "Noto Serif Malayalam"],
-  telu: ["Gautami", "Nirmala UI", "Telugu MN", "Noto Serif Telugu"],
-  orya: ["Kalinga", "Nirmala UI", "Oriya MN", "Noto Serif Oriya"],
-  tibt: ["Microsoft Himalaya", "Kailasa", "Noto Serif Tibetan"],
 };
 
 const LATIN_STACK = SYSTEM_STACKS.latin;
@@ -165,40 +74,21 @@ export const FONT_CHOICES: FontChoice[] = [
   { id: "times", family: "Times New Roman", locals: ["Times New Roman", "Times"], group: "latin" },
   { id: "palatino", family: "Palatino", locals: ["Palatino", "Palatino Linotype", "Book Antiqua"], group: "latin" },
   { id: "literata", family: "Literata", locals: ["Literata"], group: "latin", cdn: LATIN_FONT },
+  { id: "hiragino", family: "Hiragino Mincho ProN", locals: [
+    "Hiragino Mincho ProN",
+    "Hiragino Mincho ProN W3",
+    "HiraMinProN-W3",
+    "Hiragino Mincho Pro",
+    "Hiragino Mincho Pro W3",
+    "HiraMinPro-W3",
+  ], group: "jp" },
   { id: "yu-mincho", family: "Yu Mincho", locals: ["Yu Mincho", "YuMincho"], group: "jp" },
-  { id: "hiragino", family: "Hiragino Mincho ProN", locals: ["Hiragino Mincho ProN", "Hiragino Mincho Pro"], group: "jp" },
   { id: "ms-mincho", family: "MS Mincho", locals: ["MS Mincho", "MS PMincho"], group: "jp" },
   { id: "noto-jp", family: "Noto Serif JP", locals: ["Noto Serif JP"], group: "jp", cdn: CJK_FONTS.jp },
-  { id: "songti-sc", family: "Songti SC", locals: ["Songti SC", "STSong"], group: "sc" },
-  { id: "simsun", family: "SimSun", locals: ["SimSun", "NSimSun"], group: "sc" },
-  { id: "noto-sc", family: "Noto Serif SC", locals: ["Noto Serif SC"], group: "sc", cdn: CJK_FONTS.sc },
   { id: "songti-tc", family: "Songti TC", locals: ["Songti TC"], group: "tc" },
   { id: "lisong", family: "LiSong Pro", locals: ["LiSong Pro"], group: "tc" },
   { id: "pmingliu", family: "PMingLiU", locals: ["PMingLiU", "MingLiU"], group: "tc" },
   { id: "noto-tc", family: "Noto Serif TC", locals: ["Noto Serif TC"], group: "tc", cdn: CJK_FONTS.tc },
-  { id: "batang", family: "Batang", locals: ["Batang", "BatangChe"], group: "kr" },
-  { id: "apple-myungjo", family: "AppleMyungjo", locals: ["AppleMyungjo"], group: "kr" },
-  { id: "nanum", family: "Nanum Myeongjo", locals: ["Nanum Myeongjo"], group: "kr" },
-  { id: "gungsuh", family: "Gungsuh", locals: ["Gungsuh"], group: "kr" },
-  { id: "noto-kr", family: "Noto Serif KR", locals: ["Noto Serif KR"], group: "kr", cdn: CJK_FONTS.kr },
-  { id: "pt-serif", family: "PT Serif", locals: ["PT Serif"], group: "cyrl" },
-  { id: "noto-serif", family: "Noto Serif", locals: ["Noto Serif"], group: "cyrl", cdn: NOTO_SERIF },
-  { id: "geeza", family: "Geeza Pro", locals: ["Geeza Pro"], group: "arab" },
-  { id: "trad-arabic", family: "Traditional Arabic", locals: ["Traditional Arabic"], group: "arab" },
-  { id: "noto-naskh", family: "Noto Naskh Arabic", locals: ["Noto Naskh Arabic"], group: "arab", cdn: SCRIPT_CDN.arab },
-  { id: "david", family: "David", locals: ["David"], group: "hebr" },
-  { id: "arial-hebrew", family: "Arial Hebrew", locals: ["Arial Hebrew"], group: "hebr" },
-  { id: "noto-hebr", family: "Noto Serif Hebrew", locals: ["Noto Serif Hebrew"], group: "hebr", cdn: SCRIPT_CDN.hebr },
-  { id: "thonburi", family: "Thonburi", locals: ["Thonburi"], group: "thai" },
-  { id: "leelawadee", family: "Leelawadee UI", locals: ["Leelawadee UI", "Leelawadee"], group: "thai" },
-  { id: "noto-thai", family: "Noto Serif Thai", locals: ["Noto Serif Thai"], group: "thai", cdn: SCRIPT_CDN.thai },
-  { id: "nirmala", family: "Nirmala UI", locals: ["Nirmala UI"], group: "deva" },
-  { id: "kohinoor-deva", family: "Kohinoor Devanagari", locals: ["Kohinoor Devanagari", "ITF Devanagari"], group: "deva" },
-  { id: "noto-deva", family: "Noto Serif Devanagari", locals: ["Noto Serif Devanagari"], group: "deva", cdn: SCRIPT_CDN.deva },
-  { id: "tamil-mn", family: "Tamil MN", locals: ["Tamil MN", "InaiMathi"], group: "taml" },
-  { id: "noto-taml", family: "Noto Serif Tamil", locals: ["Noto Serif Tamil"], group: "taml", cdn: SCRIPT_CDN.taml },
-  { id: "kohinoor-bangla", family: "Kohinoor Bangla", locals: ["Kohinoor Bangla", "Bangla MN"], group: "beng" },
-  { id: "noto-beng", family: "Noto Serif Bengali", locals: ["Noto Serif Bengali"], group: "beng", cdn: SCRIPT_CDN.beng },
 ];
 
 export type FontGroup = { id: FontChoice["group"]; choiceIds: string[] };
@@ -206,18 +96,34 @@ export type FontGroup = { id: FontChoice["group"]; choiceIds: string[] };
 export const FONT_GROUPS: FontGroup[] = [
   { id: "auto", choiceIds: ["auto"] },
   { id: "latin", choiceIds: ["georgia", "times", "palatino", "literata"] },
-  { id: "jp", choiceIds: ["yu-mincho", "hiragino", "ms-mincho", "noto-jp"] },
-  { id: "sc", choiceIds: ["songti-sc", "simsun", "noto-sc"] },
+  { id: "jp", choiceIds: ["hiragino", "yu-mincho", "ms-mincho", "noto-jp"] },
   { id: "tc", choiceIds: ["songti-tc", "lisong", "pmingliu", "noto-tc"] },
-  { id: "kr", choiceIds: ["apple-myungjo", "nanum", "batang", "gungsuh", "noto-kr"] },
-  { id: "cyrl", choiceIds: ["pt-serif", "noto-serif"] },
-  { id: "arab", choiceIds: ["geeza", "trad-arabic", "noto-naskh"] },
-  { id: "hebr", choiceIds: ["david", "arial-hebrew", "noto-hebr"] },
-  { id: "thai", choiceIds: ["thonburi", "leelawadee", "noto-thai"] },
-  { id: "deva", choiceIds: ["nirmala", "kohinoor-deva", "noto-deva"] },
-  { id: "taml", choiceIds: ["tamil-mn", "noto-taml"] },
-  { id: "beng", choiceIds: ["kohinoor-bangla", "noto-beng"] },
 ];
+
+type FontLocale = "en" | "ja" | "zh-Hant";
+
+const FONT_DISPLAY: Record<string, Partial<Record<FontLocale, string>>> = {
+  "Hiragino Mincho ProN": { ja: "ヒラギノ明朝 ProN", "zh-Hant": "冬青明朝 ProN" },
+  "Hiragino Mincho ProN W3": { ja: "ヒラギノ明朝 ProN", "zh-Hant": "冬青明朝 ProN" },
+  "HiraMinProN-W3": { ja: "ヒラギノ明朝 ProN", "zh-Hant": "冬青明朝 ProN" },
+  "Hiragino Mincho Pro": { ja: "ヒラギノ明朝 Pro", "zh-Hant": "冬青明朝 Pro" },
+  "Hiragino Mincho Pro W3": { ja: "ヒラギノ明朝 Pro", "zh-Hant": "冬青明朝 Pro" },
+  "HiraMinPro-W3": { ja: "ヒラギノ明朝 Pro", "zh-Hant": "冬青明朝 Pro" },
+  "Yu Mincho": { ja: "游明朝", "zh-Hant": "游明朝" },
+  YuMincho: { ja: "游明朝", "zh-Hant": "游明朝" },
+  "MS Mincho": { ja: "ＭＳ 明朝", "zh-Hant": "MS 明朝" },
+  "MS PMincho": { ja: "ＭＳ Ｐ明朝", "zh-Hant": "MS P明朝" },
+  "Songti TC": { ja: "宋体-繁", "zh-Hant": "宋體-繁" },
+  "LiSong Pro": { ja: "儷宋 Pro", "zh-Hant": "儷宋 Pro" },
+  PMingLiU: { ja: "新細明體", "zh-Hant": "新細明體" },
+  MingLiU: { ja: "細明體", "zh-Hant": "細明體" },
+};
+
+/** Localized label for a CSS family name. English (and unknown faces) stay as-is. */
+export function fontDisplayName(family: string, locale: FontLocale = "en"): string {
+  if (!family) return family;
+  return FONT_DISPLAY[family]?.[locale] || family;
+}
 
 const LATIN_LANG =
   /^(en|fr|de|es|it|pt|nl|pl|cs|ro|hu|tr|id|ms|sv|da|fi|no|nb|nn|vi|af|sw|ha|tl|fil|ca|eu|gl|ga|cy|mt|is|et|lv|lt|sk|sl|hr|bs|sq|az|uz|tk|eo|la|lb|br|gd|rm|haw)([-]|$)/;
@@ -229,33 +135,8 @@ export function isLatinLang(lang?: string): boolean {
 export function scriptFromLang(lang?: string): ScriptId {
   const lower = String(lang || "").toLowerCase().replace(/_/g, "-");
   if (!lower) return "latin";
-  if (lower.startsWith("ko")) return "kr";
-  if (/^zh-(tw|hk|mo|hant)/.test(lower)) return "tc";
-  if (lower.startsWith("zh")) return "sc";
-  if (lower.startsWith("ja")) return "jp";
-  if (/^(ar|fa|ur|ps|ckb|sd|ug|prs)([-]|$)/.test(lower)) return "arab";
-  if (/^(he|yi)([-]|$)/.test(lower)) return "hebr";
-  if (/^th([-]|$)/.test(lower)) return "thai";
-  if (/^lo([-]|$)/.test(lower)) return "laoo";
-  if (/^km([-]|$)/.test(lower)) return "khmr";
-  if (/^my([-]|$)/.test(lower)) return "mymr";
-  if (/^(hi|mr|ne|sa|kok)([-]|$)/.test(lower)) return "deva";
-  if (/^ta([-]|$)/.test(lower)) return "taml";
-  if (/^(bn|as)([-]|$)/.test(lower)) return "beng";
-  if (/^pa-(pk|arab)([-]|$)/.test(lower)) return "arab";
-  if (/^pa([-]|$)/.test(lower)) return "guru";
-  if (/^gu([-]|$)/.test(lower)) return "gujr";
-  if (/^kn([-]|$)/.test(lower)) return "knda";
-  if (/^ml([-]|$)/.test(lower)) return "mlym";
-  if (/^te([-]|$)/.test(lower)) return "telu";
-  if (/^or([-]|$)/.test(lower)) return "orya";
-  if (/^si([-]|$)/.test(lower)) return "sinh";
-  if (/^(ru|uk|bg|sr|mk|be|kk|ky|tg|mn)([-]|$)/.test(lower)) return "cyrl";
-  if (/^el([-]|$)/.test(lower)) return "grek";
-  if (/^ka([-]|$)/.test(lower)) return "geor";
-  if (/^hy([-]|$)/.test(lower)) return "armn";
-  if (/^(am|ti)([-]|$)/.test(lower)) return "ethi";
-  if (/^(bo|dz)([-]|$)/.test(lower)) return "tibt";
+  if (/^(ja|jpn)([-]|$)/.test(lower)) return "jp";
+  if (/^(zh|yue|chi|zho)([-]|$)/.test(lower)) return "tc";
   return "latin";
 }
 
@@ -283,31 +164,7 @@ export function localFontNamesForLang(lang?: string): string[] {
 export const SCRIPT_GROUP_LABELS: Record<string, string> = {
   latin: "Latin",
   jp: "Japanese",
-  sc: "Simplified Chinese",
   tc: "Traditional Chinese",
-  kr: "Korean",
-  cyrl: "Cyrillic",
-  grek: "Greek",
-  arab: "Arabic",
-  hebr: "Hebrew",
-  thai: "Thai",
-  deva: "Devanagari",
-  taml: "Tamil",
-  beng: "Bengali",
-  khmr: "Khmer",
-  mymr: "Myanmar",
-  laoo: "Lao",
-  geor: "Georgian",
-  armn: "Armenian",
-  ethi: "Ethiopic",
-  sinh: "Sinhala",
-  gujr: "Gujarati",
-  guru: "Gurmukhi",
-  knda: "Kannada",
-  mlym: "Malayalam",
-  telu: "Telugu",
-  orya: "Odia",
-  tibt: "Tibetan",
 };
 
 export function extraScriptChoices(scripts: Array<ScriptId | null | undefined>): FontChoice[] {
@@ -325,7 +182,7 @@ export function extraScriptChoices(scripts: Array<ScriptId | null | undefined>):
     for (const name of installed.slice(0, 3)) {
       out.push({ id: `sys:${name}`, family: name, locals: [name], group: script });
     }
-    const cdn = SCRIPT_CDN[script] || (isCjkFace(script) ? CJK_FONTS[script] : undefined);
+    const cdn = isCjkFace(script) ? CJK_FONTS[script] : undefined;
     if (cdn && !out.some((choice) => choice.family === cdn.family)) {
       out.push({
         id: `cdn:${script}`,
@@ -523,8 +380,12 @@ export function preferredFontGroups(
 export function normalizeFontId(value: unknown): string {
   if (typeof value !== "string" || !value) return "auto";
   if (FONT_CHOICES.some((c) => c.id === value)) return value;
-  if (value.startsWith("sys:") && value.slice(4).trim()) return value;
-  if (value.startsWith("cdn:") && SCRIPT_CDN[value.slice(4) as ScriptId]) return value;
+  if (value.startsWith("sys:")) {
+    const family = value.slice(4).trim();
+    if (family && Object.values(SYSTEM_STACKS).some((stack) => stack.includes(family))) {
+      return value;
+    }
+  }
   return "auto";
 }
 
@@ -541,9 +402,9 @@ export function fontChoice(id: string | undefined): FontChoice {
     }
   }
   if (id?.startsWith("cdn:")) {
-    const script = id.slice(4) as ScriptId;
-    const cdn = SCRIPT_CDN[script];
-    if (cdn) {
+    const script = id.slice(4);
+    if (isCjkFace(script)) {
+      const cdn = CJK_FONTS[script];
       return { id, family: cdn.family, locals: [cdn.family], group: script, cdn };
     }
   }
@@ -557,31 +418,8 @@ export function detectScript(text: string): ScriptId | null {
     const script = scriptFromLang(dcLang[1].trim());
     if (script !== "latin") return script;
   }
-  if (/[\uAC00-\uD7A3]/.test(text)) return "kr";
   if (/[\u3040-\u30FF]/.test(text)) return "jp";
-  if (/[\u4E00-\u9FFF]/.test(text)) return "sc";
-  if (/[\u0600-\u06FF]/.test(text)) return "arab";
-  if (/[\u0590-\u05FF]/.test(text)) return "hebr";
-  if (/[\u1780-\u17FF]/.test(text)) return "khmr";
-  if (/[\u1000-\u109F]/.test(text)) return "mymr";
-  if (/[\u0E80-\u0EFF]/.test(text)) return "laoo";
-  if (/[\u0E00-\u0E7F]/.test(text)) return "thai";
-  if (/[\u0F00-\u0FFF]/.test(text)) return "tibt";
-  if (/[\u0900-\u097F]/.test(text)) return "deva";
-  if (/[\u0A80-\u0AFF]/.test(text)) return "gujr";
-  if (/[\u0A00-\u0A7F]/.test(text)) return "guru";
-  if (/[\u0B80-\u0BFF]/.test(text)) return "taml";
-  if (/[\u0980-\u09FF]/.test(text)) return "beng";
-  if (/[\u0C80-\u0CFF]/.test(text)) return "knda";
-  if (/[\u0D00-\u0D7F]/.test(text)) return "mlym";
-  if (/[\u0C00-\u0C7F]/.test(text)) return "telu";
-  if (/[\u0B00-\u0B7F]/.test(text)) return "orya";
-  if (/[\u0D80-\u0DFF]/.test(text)) return "sinh";
-  if (/[\u10A0-\u10FF]/.test(text)) return "geor";
-  if (/[\u0530-\u058F]/.test(text)) return "armn";
-  if (/[\u1200-\u137F]/.test(text)) return "ethi";
-  if (/[\u0400-\u04FF]/.test(text)) return "cyrl";
-  if (/[\u0370-\u03FF]/.test(text)) return "grek";
+  if (/[\u4E00-\u9FFF]/.test(text)) return "tc";
   if (dcLang && isLatinLang(dcLang[1].trim())) return "latin";
   const xmlLang = text.match(/xml:lang\s*=\s*["']([^"']+)/i);
   if (xmlLang) {
@@ -665,11 +503,14 @@ function firstAvailableFont(names: string[]): string | null {
     const canvas = document.createElement("canvas");
     const ctx = canvas.getContext("2d");
     if (!ctx) return names[0];
+    // Do not fall back to `serif`: on macOS Chrome that already maps あ to
+    // Hiragino, so Hiragino measures equal to the baseline and Auto skips it
+    // for Yu Mincho.
     const sample = "A國한あבกकஅকЯΩ";
-    ctx.font = '72px "lazahataMissingFont", serif';
+    ctx.font = '72px "lazahataMissingFont"';
     const fallback = ctx.measureText(sample).width;
     for (const name of names) {
-      ctx.font = `72px "${name}", "lazahataMissingFont", serif`;
+      ctx.font = `72px "${name}", "lazahataMissingFont"`;
       if (ctx.measureText(sample).width !== fallback) return name;
     }
   } catch {

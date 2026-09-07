@@ -10,6 +10,8 @@
   --btn-fg: #ffffff;
   --hover-fill: rgba(0, 0, 0, 0.05);
   --code-bg: #f4f4f4;
+  --danger: #e74c3c;
+  --warn: #d68910;
   color-scheme: light;
 }
 
@@ -26,6 +28,8 @@
     --btn-fg: #0a0a0a;
     --hover-fill: rgba(255, 255, 255, 0.06);
     --code-bg: #171717;
+    --danger: #e74c3c;
+    --warn: #d68910;
     color-scheme: dark;
   }
 }
@@ -75,6 +79,15 @@ header.hero h1 {
   font-weight: 600;
   letter-spacing: -0.03em;
   line-height: 1.2;
+}
+
+header.hero h1 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+header.hero h1 a:hover {
+  text-decoration: underline;
 }
 
 .hero-links {
@@ -164,6 +177,7 @@ header.hero h1 {
 
 .btn {
   display: inline-block;
+  font-family: inherit;
   text-decoration: none;
   border: none;
   border-radius: 999px;

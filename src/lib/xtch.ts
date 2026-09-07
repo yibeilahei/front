@@ -3,13 +3,13 @@
  * Matches the CROSS-Point / FilesPage on-device format:
  * 2-bit grayscale, vertical scan, columns right-to-left.
  *
- * Pages are compressed independently with raw DEFLATE (RFC 1951, no zlib/gzip
- * wrapper) via fflate's synchronous deflate/inflate — matches the "puff"
- * inflate vendored into the on-device firmware (lib/Xtch/puff.c). Falls back
- * to storing a page raw if compression doesn't shrink it, so it's always a
- * net win. fflate is used (over the built-in CompressionStream) because its
- * sync API skips the writer/reader/promise plumbing a stream needs, which is
- * pure overhead for a single page-sized buffer.
+ * Optional per-page raw DEFLATE (RFC 1951, no zlib/gzip wrapper) via fflate
+ * — matches the "puff" inflate vendored into lazahata firmware
+ * (lib/Xtch/puff.c). Off by default: stock CrossPoint firmware cannot
+ * inflate compressed pages. When on, falls back to raw if compression
+ * doesn't shrink the page. fflate is used (over CompressionStream) because
+ * its sync API skips stream plumbing, which is pure overhead for a
+ * page-sized buffer.
  */
 
 import { deflateSync, inflateSync } from "fflate";
@@ -50,6 +50,7 @@ export async function encodeXthPage(
   data: ArrayLike<number>,
   width: number,
   height: number,
+  opts?: { compress?: boolean },
 ): Promise<Uint8Array> {
   const colBytes = Math.ceil(height / 8);
   const plane0 = new Uint8Array(colBytes * width);
@@ -82,14 +83,16 @@ export async function encodeXthPage(
 
   let body: Uint8Array = raw;
   let compression = 0;
-  try {
-    const compressed = deflateRaw(raw);
-    if (compressed.length < raw.length) {
-      body = compressed;
-      compression = 1;
+  if (opts?.compress) {
+    try {
+      const compressed = deflateRaw(raw);
+      if (compressed.length < raw.length) {
+        body = compressed;
+        compression = 1;
+      }
+    } catch {
+      // Compression unavailable or failed; fall back to storing raw bytes.
     }
-  } catch {
-    // Compression unavailable or failed; fall back to storing raw bytes.
   }
 
   const header = new Uint8Array(22);
@@ -125,7 +128,6 @@ export function buildXtchContainer(
   height: number,
   info: { title?: string; author?: string; authors?: string },
   toc: Array<{ title?: string; name?: string; page?: number; startPage?: number }>,
-  opts: { readDirection?: number } = {},
 ): Uint8Array {
   const magic = "XTCH";
   const title = String(info.title || "");
@@ -158,7 +160,7 @@ export function buildXtchContainer(
   for (let i = 0; i < 4; i++) bytes[i] = magic.charCodeAt(i);
   view.setUint16(4, 1, true);
   view.setUint16(6, pages.length, true);
-  bytes[8] = Number(opts.readDirection) === 2 ? 2 : Number(opts.readDirection) === 1 ? 1 : 0;
+  bytes[8] = 0;
   bytes[9] = 1;
   bytes[10] = 0;
   bytes[11] = chapters.length > 0 ? 1 : 0;

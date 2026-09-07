@@ -58,8 +58,9 @@ export async function sniffFb2(file: File): Promise<{ markup: string; script: Sc
   const markup = await readFb2XmlSample(file);
   const lang = langFromFb2(markup);
   const fromLang = lang ? scriptFromLang(lang) : null;
+  const glyph = detectScript(markup.slice(0, 12000));
   const script =
-    fromLang && fromLang !== "latin" ? fromLang : detectScript(markup.slice(0, 12000));
+    fromLang && fromLang !== "latin" ? fromLang : glyph || fromLang;
   return { markup, script };
 }
 

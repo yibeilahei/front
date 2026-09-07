@@ -1,6 +1,6 @@
 "use client";
 
-import { pickUsedFontFamily } from "@/lib/fonts";
+import { fontDisplayName, pickUsedFontFamily } from "@/lib/fonts";
 import { t, type Locale } from "@/lib/i18n";
 import type { Job, PersistSettings } from "@/lib/types";
 
@@ -61,7 +61,7 @@ export function Queue({
               <div className="job-facts">
                 <span className="job-tag">{writing}</span>
                 <span className="job-tag">{used.deviceId}</span>
-                <span className="job-tag">{fontLabel}</span>
+                <span className="job-tag">{fontDisplayName(fontLabel, locale)}</span>
                 <span className="job-tag">{used.fontSize}px</span>
                 <span className="job-tag">{used.lineHeight}%</span>
               </div>

@@ -42,19 +42,30 @@ assert.equal(page[1], 0x54);
 assert.equal(page[2], 0x48);
 assert.equal(page[3], 0x00);
 assert.equal(page[8], 0, 'colorMode byte');
+assert.equal(page[9], 0, 'compression is off by default');
 
 const pageView = new DataView(page.buffer, page.byteOffset, page.byteLength);
 assert.equal(pageView.getUint16(4, true), width);
 assert.equal(pageView.getUint16(6, true), height);
-// A solid white page compresses well; dataSize is the on-disk body length,
-// which is smaller than the raw bitmapSize when compression kicked in.
 const dataSize = pageView.getUint32(10, true);
 assert.equal(page.length, 22 + dataSize);
-if (page[9] === 1) {
-  assert.ok(dataSize < bitmapSize, 'compressed body should be smaller than raw');
-} else {
-  assert.equal(dataSize, bitmapSize);
-}
+assert.equal(dataSize, bitmapSize);
+
+const compressedWhite = await encodeXthPage(rgbaFill(width, height, 255), width, height, {
+  compress: true,
+});
+assert.equal(compressedWhite[9], 1, 'solid white page should compress when asked');
+const compressedSize = new DataView(
+  compressedWhite.buffer,
+  compressedWhite.byteOffset,
+  compressedWhite.byteLength,
+).getUint32(10, true);
+assert.ok(compressedSize < bitmapSize, 'compressed body should be smaller than raw');
+const compressedDecoded = await decodeXthPage(compressedWhite);
+assert.ok(
+  compressedDecoded.rgba.every((v, i) => (i % 4 === 3 ? v === 255 : v === 255)),
+  'compressed white round-trip',
+);
 
 // Round-trip: decode should reproduce the original all-white page regardless
 // of whether compression was actually used on disk.
@@ -74,7 +85,9 @@ const noiseWidth = 528;
 const noiseHeight = 792;
 const noiseColBytes = Math.ceil(noiseHeight / 8);
 const noiseBitmapSize = noiseColBytes * noiseWidth * 2;
-const noisePage = await encodeXthPage(rgbaNoise(noiseWidth, noiseHeight), noiseWidth, noiseHeight);
+const noisePage = await encodeXthPage(rgbaNoise(noiseWidth, noiseHeight), noiseWidth, noiseHeight, {
+  compress: true,
+});
 const noiseView = new DataView(noisePage.buffer, noisePage.byteOffset, noisePage.byteLength);
 assert.equal(noisePage[9], 0, 'noisy page should fall back to raw storage');
 assert.equal(noiseView.getUint32(10, true), noiseBitmapSize);
@@ -86,7 +99,9 @@ assert.equal(noiseDecoded.height, noiseHeight);
 // should compress substantially.
 const bigWidth = 528;
 const bigHeight = 792;
-const bigPage = await encodeXthPage(rgbaFill(bigWidth, bigHeight, 255), bigWidth, bigHeight);
+const bigPage = await encodeXthPage(rgbaFill(bigWidth, bigHeight, 255), bigWidth, bigHeight, {
+  compress: true,
+});
 const bigColBytes = Math.ceil(bigHeight / 8);
 const bigBitmapSize = bigColBytes * bigWidth * 2;
 assert.equal(bigPage[9], 1, 'large solid page should compress');
@@ -101,7 +116,6 @@ const container = buildXtchContainer(
   height,
   { title: 'Test Book', author: 'Ada' },
   [{ title: 'Chapter One', page: 0 }],
-  { readDirection: 0 }
 );
 
 assert.equal(String.fromCharCode(...container.subarray(0, 4)), 'XTCH');
@@ -144,7 +158,6 @@ const overflow = buildXtchContainer(
   height,
   { title: longTitle, author: "Ada" },
   [],
-  { readDirection: 0 },
 );
 assert.equal(overflow[56 + 126], 0);
 assert.equal(decoder.decode(overflow.subarray(56 + 128, 56 + 131)), "Ada");

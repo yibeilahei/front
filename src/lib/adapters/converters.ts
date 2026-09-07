@@ -152,8 +152,10 @@ async function convertSession(
       const frame = await renderSessionPage(session, i);
       const idx = i;
       const job = (pool
-        ? pool.encode(frame, session.width, session.height)
-        : encodeXthPage(frame, session.width, session.height)
+        ? pool.encode(frame, session.width, session.height, settings.pageCompression)
+        : encodeXthPage(frame, session.width, session.height, {
+            compress: settings.pageCompression,
+          })
       ).then((bytes) => {
         pages[idx] = bytes;
       });
@@ -170,15 +172,12 @@ async function convertSession(
       session.pager?.destroy();
     }
   }
-  const dir = Number(settings.readDirection);
-  const readDirection = dir === 1 || dir === 2 ? dir : 0;
   const bytes = buildXtchContainer(
     pages,
     session.width,
     session.height,
     session.info,
     session.toc,
-    { readDirection },
   );
   const partial = Boolean(session.truncated) || (maxPages != null && available > maxPages);
   return {

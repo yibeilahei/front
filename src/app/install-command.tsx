@@ -1,15 +1,18 @@
 "use client";
 
 import { useCallback, useState } from "react";
+import { t, type Locale } from "@/lib/i18n";
 
 export function InstallCommand({
   label,
   hint,
   command,
+  locale,
 }: {
   label: string;
   hint: string;
   command: string;
+  locale: Locale;
 }) {
   const [copied, setCopied] = useState(false);
 
@@ -34,9 +37,9 @@ export function InstallCommand({
           type="button"
           className="copy-btn"
           onClick={copy}
-          aria-label={`Copy ${label} install command`}
+          aria-label={t("copyCommand", { label }, locale)}
         >
-          {copied ? "Copied" : "Copy"}
+          {copied ? t("copied", undefined, locale) : t("copy", undefined, locale)}
         </button>
       </div>
       <pre className="install-code">

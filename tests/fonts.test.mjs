@@ -3,12 +3,20 @@ import {
   availableFontChoiceIds,
   FONT_CHOICES,
   fontChoice,
+  fontDisplayName,
   listBookFontChoices,
   pickUsedFontFamily,
   preferredFontGroups,
 } from "../src/lib/fonts.ts";
 
 assert.ok(!fontChoice("pmingliu").locals.includes("Songti TC"));
+assert.equal(fontDisplayName("Hiragino Mincho ProN", "en"), "Hiragino Mincho ProN");
+assert.equal(fontDisplayName("Hiragino Mincho ProN", "ja"), "ヒラギノ明朝 ProN");
+assert.equal(fontDisplayName("Hiragino Mincho ProN W3", "ja"), "ヒラギノ明朝 ProN");
+assert.equal(fontDisplayName("Hiragino Mincho ProN", "zh-Hant"), "冬青明朝 ProN");
+assert.equal(fontDisplayName("Yu Mincho", "ja"), "游明朝");
+assert.equal(fontDisplayName("Songti TC", "zh-Hant"), "宋體-繁");
+assert.equal(fontDisplayName("Georgia", "ja"), "Georgia");
 
 const listed = listBookFontChoices();
 assert.ok(listed.some((c) => c.id === "auto"));
@@ -37,8 +45,8 @@ const installed = [
   "literata",
   "hiragino",
   "noto-jp",
-  "songti-sc",
-  "noto-sc",
+  "songti-tc",
+  "noto-tc",
 ];
 
 const ids = availableFontChoiceIds();
@@ -46,13 +54,17 @@ assert.ok(ids.includes("auto"));
 assert.ok(ids.includes("georgia"));
 assert.ok(ids.includes("literata"));
 assert.ok(ids.includes("noto-jp"));
-assert.ok(ids.includes("noto-sc"));
+assert.ok(ids.includes("noto-tc"));
+assert.ok(!ids.includes("noto-sc"));
+assert.ok(!ids.includes("noto-kr"));
 
 const noBook = preferredFontGroups(undefined, undefined, null, installed);
 assert.ok(noBook.some((g) => g.id === "auto"));
 assert.ok(noBook.some((g) => g.id === "latin" && g.choiceIds.includes("georgia")));
 assert.ok(noBook.some((g) => g.id === "jp" && g.choiceIds.includes("hiragino")));
-assert.ok(noBook.some((g) => g.id === "sc"));
+assert.ok(noBook.some((g) => g.id === "tc"));
+assert.ok(!noBook.some((g) => g.id === "sc"));
+assert.ok(!noBook.some((g) => g.id === "kr"));
 assert.equal(
   noBook.find((g) => g.id === "auto")?.choiceIds.join(),
   "auto",
@@ -62,7 +74,7 @@ const jpBook = preferredFontGroups(undefined, undefined, "jp", installed);
 assert.equal(jpBook[0].id, "auto");
 assert.equal(jpBook[1].id, "jp");
 assert.ok(jpBook.find((g) => g.id === "jp")?.choiceIds.includes("hiragino"));
-assert.ok(jpBook.some((g) => g.id === "sc"));
+assert.ok(jpBook.some((g) => g.id === "tc"));
 assert.ok(jpBook.some((g) => g.id === "latin"));
 
 const jpShort = preferredFontGroups(undefined, undefined, "jp", installed, true);
@@ -70,7 +82,7 @@ assert.deepEqual(
   jpShort.map((g) => g.id),
   ["auto", "jp", "latin"],
 );
-assert.ok(!jpShort.some((g) => g.id === "sc"));
+assert.ok(!jpShort.some((g) => g.id === "tc"));
 
 const latinBook = preferredFontGroups(undefined, undefined, "latin", installed, true);
 assert.deepEqual(

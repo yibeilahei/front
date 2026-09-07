@@ -30,24 +30,24 @@ import { axisFromSample } from "@/lib/detectVertical";
 import { detectScript } from "@/lib/fonts";
 import {
   applyDocumentLocale,
-  resolveLocale,
+  DEFAULT_LOCALE,
+  detectLocale,
   setLocale,
   t,
 } from "@/lib/i18n";
+import { CONTACT_URL } from "@/lib/site";
 import { decodeXthPage, parseXtch, type XtchBook } from "@/lib/xtch";
 import type { ConvertResult, Job, PersistSettings, ToastState, WritingMode } from "@/lib/types";
 import Link from "next/link";
 import { DropZone } from "./DropZone";
-import { LanguagePicker } from "./LanguagePicker";
 import { Preview } from "./Preview";
 import { Queue } from "./Queue";
 import { SettingsPanel } from "./SettingsPanel";
 import { Toast } from "./Toast";
 
 const PREVIEW_PAGES = 20;
-const FIRMWARE_RELEASES_URL = "https://github.com/yibeilahei/lazahata/releases";
-const CONTACT_URL = "https://x.com/adamzhang1999";
-const COOKBOOK_URL = "/#install";
+const FIRMWARE_URL = "/firmware/";
+const COOKBOOK_URL = "/cookbook/";
 
 function paintFrame(
   canvas: HTMLCanvasElement,
@@ -129,7 +129,7 @@ export function ConverterApp() {
     saveSettings(settings);
   }, [hydrated, settings]);
 
-  const locale = resolveLocale(settings.locale, hydrated ? undefined : "en");
+  const locale = detectLocale(hydrated ? undefined : DEFAULT_LOCALE);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -456,31 +456,17 @@ export function ConverterApp() {
       <div className="wrap">
       <header className="hero">
         <div className="hero-top">
-          <h1>
-            <Link href="/">lazahata</Link>
-          </h1>
+          <h1>lazahata</h1>
           <div className="hero-links">
-            <a
-              className="hero-link"
-              href={FIRMWARE_RELEASES_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <Link className="hero-link" href={FIRMWARE_URL}>
               {t("firmware", undefined, locale)}
-            </a>
-            <a
-              className="hero-link"
-              href={CONTACT_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            </Link>
+            <Link className="hero-link" href={COOKBOOK_URL}>
+              {t("cookbookLink", undefined, locale)}
+            </Link>
+            <a className="hero-link" href={CONTACT_URL}>
               {t("contact", undefined, locale)}
             </a>
-            <LanguagePicker
-              value={settings.locale}
-              locale={locale}
-              onChange={(next) => updateSettings({ locale: next })}
-            />
           </div>
         </div>
         <p className="lede">
@@ -498,9 +484,9 @@ export function ConverterApp() {
         </div>
         <p className="cookbook">
           {t("cookbookPrefix", undefined, locale)}
-          <a href={COOKBOOK_URL}>
+          <Link href={COOKBOOK_URL}>
             {t("cookbookLink", undefined, locale)}
-          </a>
+          </Link>
           {t("cookbookSuffix", undefined, locale)}
         </p>
       </header>
@@ -531,7 +517,7 @@ export function ConverterApp() {
             <div className="actions">
               <button
                 type="button"
-                className="btn btn-convert"
+                className="btn btn-primary"
                 disabled={converting || jobs.length === 0}
                 onClick={() => void convertQueue({ download: true })}
               >

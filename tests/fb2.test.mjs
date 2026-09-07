@@ -16,7 +16,7 @@ const file = new File([xml], "n.xml", { type: "application/xml" });
 assert.equal(await isFb2File(file), true);
 const sniff = await sniffFb2(file);
 assert.ok(sniff.markup.includes("FictionBook"));
-assert.equal(sniff.script, "cyrl");
+assert.equal(sniff.script, "latin");
 const sample = await readFb2XmlSample(file);
 assert.ok(sample.includes("<lang>ru</lang>"));
 
