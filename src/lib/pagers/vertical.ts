@@ -15,14 +15,15 @@ import {
 import { t } from "../i18n";
 import {
   capPageCount,
-  isWebKitEngine,
   loadIframe,
   pagerHostCss,
   snapshotViewport,
   waitFrame,
 } from "./snapshot";
+import { normalizeRuby } from "./sanitizeHtml";
 import {
   clusterColumns,
+  columnPitch,
   fallbackPageWindows,
   packColumnPages,
   type ColumnRect,
@@ -59,29 +60,20 @@ function textAlignCss(align: number): string {
   return "justify";
 }
 
-function columnPitch(pageW: number, fontSize: number, lineHeightRatio: number): number {
-  const requested = fontSize * lineHeightRatio;
-  const cols = Math.max(1, Math.round(pageW / requested));
-  return pageW / cols;
-}
-
 function bookCss(
   settings: ConvertSettings,
   fontCss: string,
   w: number,
   h: number,
   primary: CjkFace,
-  webkit: boolean,
 ): string {
   const fontSize = Number(settings.fontSize) || 34;
   const lineHeight = (Number(settings.lineHeight) || 120) / 100;
   const pitch = columnPitch(w, fontSize, lineHeight);
   const align = textAlignCss(Number(settings.textAlign));
-  // WebKit's CSS columns + vertical-rl overlap in one box and hang
-  // html-to-image. Use native tategaki (max-content, grow left) instead.
-  const flowBox = webkit
-    ? `width: max-content; max-width: none; max-height: ${h}px; column-width: auto; column-count: auto;`
-    : `width: ${w}px; max-width: none; max-height: ${h}px; column-width: ${h}px; column-gap: 0; column-fill: auto;`;
+  // CSS columns + vertical-rl overlap glyphs (especially ruby) in Blink and
+  // hang html-to-image in WebKit. Native tategaki: wrap at height, grow left.
+  const flowBox = `width: max-content; max-width: none; max-height: ${h}px; column-width: auto; column-count: auto;`;
   return `
     ${fontCss}
     html, body {
@@ -124,39 +116,36 @@ function bookCss(
       background: #fff;
       font-family: ${cssFontFamily(settings.fontId, primary)} !important;
       font-size: ${fontSize}px;
-      line-height: ${pitch}px;
+      line-height: ${(pitch / fontSize).toFixed(4)};
       text-align: ${align};
       ${flowBox}
     }
-    .lz-flow, .lz-flow *:not(ruby):not(rt):not(rtc):not(rp) {
-      writing-mode: vertical-rl !important;
-      -webkit-writing-mode: vertical-rl !important;
-    }
-    .lz-flow *:not(rt):not(rtc):not(rp) {
-      line-height: ${pitch}px !important;
-    }
-    .lz-flow *:not(rt):not(rtc):not(rp) {
-      margin: 0 !important;
-      padding: 0 !important;
-    }
+    /* Pager owns the flow box only. Do not !important-override descendants:
+       that breaks ruby, text-combine-upright, nested hltr, and inline images. */
     .lz-flow ruby {
-      ruby-position: over !important;
-      -webkit-ruby-position: before !important;
-      ruby-align: space-around;
-      white-space: nowrap;
-      break-inside: avoid;
-      page-break-inside: avoid;
+      ruby-position: over;
+      -webkit-ruby-position: before;
+      ruby-overhang: none;
     }
     .lz-flow rt, .lz-flow rtc {
-      font-size: 0.5em !important;
-      line-height: 1 !important;
-      font-weight: 400 !important;
+      font-size: 0.5em;
+      line-height: 1;
+    }
+    /* Japanese EPUB 縦中横: Kindle often only sets the webkit prefix. */
+    .lz-flow .tcy, .lz-flow .upright-1 {
+      text-combine-upright: all;
+      -webkit-text-combine: horizontal;
+      letter-spacing: 0;
     }
     .lz-flow img, .lz-flow svg, .lz-flow video, .lz-flow canvas {
       box-sizing: border-box;
-      display: block;
       max-width: ${Math.max(1, w - 2)}px;
       max-height: ${Math.max(1, h - 2)}px;
+    }
+    .lz-flow img.fit,
+    .lz-flow p:has(> img:only-child) > img,
+    .lz-flow div:has(> img:only-child) > img {
+      display: block;
       object-fit: contain;
       break-inside: avoid;
       break-before: column;
@@ -206,6 +195,7 @@ function wrapDocument(doc: Document, css: string): { flow: HTMLElement; vp: HTML
   vp.className = "lz-vp";
   const body = doc.body;
   while (body.firstChild) flow.append(body.firstChild);
+  normalizeRuby(flow);
   clip.append(flow);
   vp.append(clip);
   body.append(vp);
@@ -328,7 +318,7 @@ function pageWindowsOf(
   flow: HTMLElement,
   clip: HTMLElement,
   pageW: number,
-  pageH: number,
+  _pageH: number,
   pitch: number,
 ): PageWindow[] {
   flow.style.transform = "";
@@ -336,36 +326,23 @@ function pageWindowsOf(
   void flow.offsetWidth;
   void clip.offsetHeight;
 
-  if (isWebKitEngine()) {
-    const clipRight = clip.getBoundingClientRect().right;
-    const columns = clusterColumns(collectColumnRects(flow), pitch);
-    if (columns.length) {
-      const packed = packColumnPages(columns, Math.max(1, pageW), clipRight);
-      return packed.slice(0, capPageCount(packed.length)).map((page) => ({
-        shift: page.shift,
-        axis: "x" as const,
-        width: page.width,
-      }));
-    }
-    const totalWidth = Math.max(flow.scrollWidth, clip.scrollWidth, pageW);
-    const fallback = fallbackPageWindows(totalWidth, pageW);
-    return fallback.slice(0, capPageCount(fallback.length)).map((page) => ({
+  const clipRight = clip.getBoundingClientRect().right;
+  const columns = clusterColumns(collectColumnRects(flow), pitch);
+  if (columns.length) {
+    const packed = packColumnPages(columns, Math.max(1, pageW), clipRight);
+    return packed.slice(0, capPageCount(packed.length)).map((page) => ({
       shift: page.shift,
       axis: "x" as const,
       width: page.width,
     }));
   }
-
   const totalWidth = Math.max(flow.scrollWidth, clip.scrollWidth, pageW);
-  const totalHeight = Math.max(flow.scrollHeight, clip.scrollHeight, pageH);
-  const xPages = Math.max(1, Math.round(totalWidth / pageW));
-  const yPages = Math.max(1, Math.round(totalHeight / pageH));
-  if (xPages >= yPages && totalWidth > pageW + 2) {
-    const count = capPageCount(xPages);
-    return Array.from({ length: count }, (_, page) => ({ shift: page * pageW, axis: "x" as const }));
-  }
-  const count = capPageCount(yPages);
-  return Array.from({ length: count }, (_, page) => ({ shift: page * pageH, axis: "y" as const }));
+  const fallback = fallbackPageWindows(totalWidth, pageW);
+  return fallback.slice(0, capPageCount(fallback.length)).map((page) => ({
+    shift: page.shift,
+    axis: "x" as const,
+    width: page.width,
+  }));
 }
 
 function showPage(flow: HTMLElement, clip: HTMLElement, pages: PageWindow[], page: number) {
@@ -401,7 +378,7 @@ export async function createVerticalPager(
       ? await detectCjkFaceFromEpub(opts.file)
       : null;
   const usedFontFamily = pickUsedFontFamily(settings.fontId, cjkFace);
-  const css = bookCss(settings, systemCss, w, h, cjkFace || "jp", isWebKitEngine());
+  const css = bookCss(settings, systemCss, w, h, cjkFace || "jp");
 
   const host = document.createElement("div");
   host.setAttribute("data-lazahata-foliate", "1");
@@ -485,19 +462,12 @@ export async function createVerticalPager(
   const title = metaString(book.metadata?.title) || opts?.titleFallback || "";
   const author = metaString(book.metadata?.author) || metaString(book.metadata?.creator);
   const toc = flattenToc(book.toc, book, pageMap);
-  const cache = new Map<string, Uint8ClampedArray>();
 
   async function renderPage(pageIndex: number): Promise<Uint8ClampedArray> {
     const loc = pageMap[Math.max(0, Math.min(pageMap.length - 1, pageIndex))];
-    const key = loc.index + ":" + loc.page;
-    const hit = cache.get(key);
-    if (hit) return hit;
     const { flow, vp, clip, pages } = await openSection(loc.index);
     showPage(flow, clip, pages, loc.page);
-    await waitFrame();
-    const copy = await snapshotViewport(vp, w, h);
-    cache.set(key, copy);
-    return copy;
+    return snapshotViewport(vp, w, h);
   }
 
   if (onStatus) onStatus(t("foliateReady", { n: pageMap.length }));
@@ -512,7 +482,6 @@ export async function createVerticalPager(
       pageCount: pageMap.length,
       renderPage,
       destroy() {
-        cache.clear();
         sectionPages.clear();
         try { book.sections[currentIndex]?.unload?.(); } catch { /* ignore */ }
         iframe.src = "about:blank";

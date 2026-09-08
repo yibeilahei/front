@@ -1,15 +1,15 @@
 /**
- * Capture a laid-out pager viewport to RGBA.
+ * Capture a laid-out pager viewport to RGBA from live layout boxes.
  *
- * Chrome/Firefox: html-to-image (SVG foreignObject).
- * WebKit: do not use foreignObject — Safari hangs on vertical-rl HTML inside
- * an SVG image (img.decode never resolves), which leaves preview at 0%.
- * Paint from live layout boxes instead.
+ * html-to-image (SVG foreignObject) is accurate but ~10× slower per page and
+ * hangs WebKit on vertical-rl. Glyph rects + fillText match the pager closely
+ * enough for XTCH (text, ruby, images) and keep convert on the main thread.
  */
 
 import { toCanvas } from "html-to-image";
 import { systemFontFaceCss } from "../fonts";
 import { t } from "../i18n";
+import { glyphNeedsSidewaysRotate } from "./uprightChar";
 
 const systemCss = systemFontFaceCss();
 const MAX_SECTION_PAGES = 5000;
@@ -46,8 +46,8 @@ export function waitFrame(): Promise<void> {
       done = true;
       resolve();
     };
-    requestAnimationFrame(() => requestAnimationFrame(finish));
-    window.setTimeout(finish, 80);
+    if (typeof requestAnimationFrame === "function") requestAnimationFrame(finish);
+    window.setTimeout(finish, 16);
   });
 }
 
@@ -138,11 +138,20 @@ function centerInBox(
   return cx >= boxX && cx < boxX + boxW && cy >= boxY && cy < boxY + boxH;
 }
 
+let snapCanvas: HTMLCanvasElement | null = null;
+
+function snapshotCanvas(w: number, h: number): HTMLCanvasElement {
+  if (!snapCanvas) snapCanvas = document.createElement("canvas");
+  if (snapCanvas.width !== w || snapCanvas.height !== h) {
+    snapCanvas.width = w;
+    snapCanvas.height = h;
+  }
+  return snapCanvas;
+}
+
 function rasterizeElement(root: HTMLElement, w: number, h: number): Uint8ClampedArray {
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d");
+  const canvas = snapshotCanvas(w, h);
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
   if (!ctx) throw new Error(t("snapshotFailed"));
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, w, h);
@@ -229,7 +238,12 @@ function rasterizeElement(root: HTMLElement, w: number, h: number): Uint8Clamped
         if (!centerInBox(x, y, r.width, r.height, clipX, clipY, clipW, clipH)) continue;
         ctx.save();
         ctx.translate(x + r.width / 2, y + r.height / 2);
-        if (vertical && r.height > r.width * 1.35) ctx.rotate(Math.PI / 2);
+        if (
+          vertical &&
+          glyphNeedsSidewaysRotate(ch, style.textOrientation || "mixed", r.width, r.height)
+        ) {
+          ctx.rotate(Math.PI / 2);
+        }
         ctx.fillText(ch, 0, 0);
         ctx.restore();
       }
@@ -240,28 +254,18 @@ function rasterizeElement(root: HTMLElement, w: number, h: number): Uint8Clamped
   return new Uint8ClampedArray(ctx.getImageData(0, 0, w, h).data);
 }
 
-function flowIsVertical(vp: HTMLElement): boolean {
-  const flow = vp.querySelector(".lz-flow") || vp;
-  const writing = vp.ownerDocument.defaultView?.getComputedStyle(flow).writingMode || "";
-  return writing.includes("vertical");
-}
-
 export async function snapshotViewport(
   vp: HTMLElement,
   w: number,
   h: number,
 ): Promise<Uint8ClampedArray> {
-  // Safari hangs forever on SVG foreignObject + vertical-rl (preview stuck at 0%).
-  const useRaster = isWebKitEngine() && flowIsVertical(vp);
-  if (!useRaster) {
-    try {
-      return await Promise.race([
-        htmlToImageSnapshot(vp, w, h),
-        timeoutMs<Uint8ClampedArray>(20000, t("snapshotFailed")),
-      ]);
-    } catch (err) {
-      console.warn("html-to-image snapshot failed, rasterizing instead", err);
-    }
+  try {
+    return rasterizeElement(vp, w, h);
+  } catch (err) {
+    console.warn("live raster failed, html-to-image fallback", err);
+    return Promise.race([
+      htmlToImageSnapshot(vp, w, h),
+      timeoutMs<Uint8ClampedArray>(20000, t("snapshotFailed")),
+    ]);
   }
-  return rasterizeElement(vp, w, h);
 }

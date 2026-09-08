@@ -73,11 +73,14 @@ export class XtchEncodePool {
     const id = this.nextId++;
     const worker = this.workers[this.nextWorker];
     this.nextWorker = (this.nextWorker + 1) % this.workers.length;
-    // Copy into a fresh, transferable buffer: `data` may be a cached frame
-    // owned by the pager (see pagers/vertical.ts, horizontal.ts), and
-    // transferring it would detach that cache entry's backing buffer.
-    const copy = data.slice();
-    const buffer = copy.buffer as ArrayBuffer;
+    // Transfer when this view owns its buffer (ImageData / a slice we made).
+    // Copy otherwise so we never detach a view the caller still needs.
+    const view = data instanceof Uint8ClampedArray ? data : new Uint8ClampedArray(data);
+    const owned =
+      view.byteOffset === 0 && view.byteLength === view.buffer.byteLength && view.buffer instanceof ArrayBuffer
+        ? view
+        : view.slice();
+    const buffer = owned.buffer as ArrayBuffer;
     return new Promise((resolve, reject) => {
       this.pending.set(id, { resolve, reject });
       const req: EncodeRequest = { id, buffer, width, height, compress };

@@ -7,6 +7,7 @@
 
 import { cssFontFamily, pickUsedFontFamily, systemFontFaceCss, type ScriptId } from "../fonts";
 import { t } from "../i18n";
+import { normalizeRuby } from "./sanitizeHtml";
 import { capPageCount, loadIframe, pagerHostCss, snapshotViewport, waitFrame } from "./snapshot";
 import type { Book, ConvertSettings, DocumentInfo, StatusFn, TocEntry, VerticalPager } from "../types";
 
@@ -84,19 +85,20 @@ function bookCss(settings: ConvertSettings, fontCss: string, w: number, h: numbe
       column-gap: 0;
       column-fill: auto;
     }
-    .lz-flow, .lz-flow * {
-      writing-mode: horizontal-tb !important;
-      -webkit-writing-mode: horizontal-tb !important;
-    }
+    /* Pager owns the flow box only. Do not force writing-mode on descendants. */
     .lz-flow p {
       margin: 0 0 0.6em 0 !important;
       padding: 0 !important;
     }
     .lz-flow img, .lz-flow svg, .lz-flow video, .lz-flow canvas {
       box-sizing: border-box;
-      display: block;
       max-width: ${Math.max(1, w - 2)}px;
       max-height: ${Math.max(1, h - 2)}px;
+    }
+    .lz-flow img.fit,
+    .lz-flow p:has(> img:only-child) > img,
+    .lz-flow div:has(> img:only-child) > img {
+      display: block;
       object-fit: contain;
       break-inside: avoid;
     }
@@ -143,6 +145,7 @@ function wrapDocument(doc: Document, css: string): { flow: HTMLElement; vp: HTML
   vp.className = "lz-vp";
   const body = doc.body;
   while (body.firstChild) flow.append(body.firstChild);
+  normalizeRuby(flow);
   clip.append(flow);
   vp.append(clip);
   body.append(vp);
@@ -293,19 +296,12 @@ export async function createHorizontalPager(
     const title = metaString(book.metadata?.title) || opts?.titleFallback || "";
     const author = metaString(book.metadata?.author) || metaString(book.metadata?.creator);
     const toc = flattenToc(book.toc, book, pageMap);
-    const cache = new Map<string, Uint8ClampedArray>();
 
     async function renderPage(pageIndex: number): Promise<Uint8ClampedArray> {
       const loc = pageMap[Math.max(0, Math.min(pageMap.length - 1, pageIndex))];
-      const key = loc.index + ":" + loc.page;
-      const hit = cache.get(key);
-      if (hit) return hit;
       const { flow, vp, pages } = await openSection(loc.index);
       showPage(flow, pages, loc.page);
-      await waitFrame();
-      const copy = await snapshotViewport(vp, w, h);
-      cache.set(key, copy);
-      return copy;
+      return snapshotViewport(vp, w, h);
     }
 
     if (onStatus) onStatus(t("foliateReady", { n: pageMap.length }));
@@ -320,7 +316,6 @@ export async function createHorizontalPager(
         pageCount: pageMap.length,
         renderPage,
         destroy() {
-          cache.clear();
           sectionPages.clear();
           try {
             book.sections[currentIndex]?.unload?.();

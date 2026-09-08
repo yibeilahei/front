@@ -4,6 +4,22 @@
  * (a <ruby> and its ふりがな) stay on the same page.
  */
 
+/** 0.5em <rt> plus a hair. Counted once: ruby-overhang:none keeps it inside the line box. */
+export const RUBY_OVERHANG_EM = 0.55;
+
+/**
+ * Column width for 縦書き. Need room for the glyph plus ふりがな on the over
+ * side (1em + 0.55em), but not double that — CSS half-leading on both sides
+ * was packing 6 huge columns on X4.
+ */
+export function columnPitch(pageW: number, fontSize: number, lineHeightRatio: number): number {
+  const size = Number(fontSize) || 34;
+  const ratio = Number(lineHeightRatio) || 1.2;
+  const minPitch = Math.max(size * ratio, size * (1 + RUBY_OVERHANG_EM));
+  const cols = Math.max(1, Math.floor(pageW / Math.max(minPitch, 1)));
+  return pageW / cols;
+}
+
 export type ColumnRect = { left: number; right: number; group?: string };
 
 export type PackedPage = {

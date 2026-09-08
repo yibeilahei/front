@@ -11,7 +11,7 @@
     "copy:pdfjs": "node scripts/copy-pdfjs.mjs",
     "start": "npx --yes serve out",
     "lint": "eslint",
-    "test": "node --experimental-strip-types --test tests/xtch.test.mjs tests/detectVertical.test.mjs tests/i18n.test.mjs tests/fonts.test.mjs tests/txt.test.mjs tests/mobi.test.mjs tests/fb2.test.mjs tests/verticalPages.test.mjs tests/jobs.test.mjs tests/pdf.test.mjs"
+    "test": "node --experimental-strip-types --test tests/xtch.test.mjs tests/detectVertical.test.mjs tests/i18n.test.mjs tests/fonts.test.mjs tests/txt.test.mjs tests/mobi.test.mjs tests/fb2.test.mjs tests/verticalPages.test.mjs tests/jobs.test.mjs tests/pdf.test.mjs tests/sanitizeHtml.test.mjs tests/uprightChar.test.mjs"
   },
   "dependencies": {
     "fflate": "^0.8.3",

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { clusterColumns, packColumnPages, fallbackPageWindows } from "../src/lib/pagers/verticalPages.ts";
+import { clusterColumns, packColumnPages, fallbackPageWindows, columnPitch, RUBY_OVERHANG_EM } from "../src/lib/pagers/verticalPages.ts";
 
 function assertNoColumnCut(columns, pages, clipRight) {
   for (const page of pages) {
@@ -116,6 +116,14 @@ function assertNoColumnCut(columns, pages, clipRight) {
 {
   const pages = packColumnPages([], 456, 468);
   assert.deepEqual(pages, [{ shift: 0, width: 456 }]);
+}
+
+// Glyph + 0.55em ruby on one side (9 columns on X4). Not 2× half-leading.
+{
+  assert.equal(RUBY_OVERHANG_EM, 0.55);
+  const pitch = columnPitch(480, 34, 1.2);
+  assert.equal(pitch, 480 / 9);
+  assert.ok(pitch >= 34 * (1 + RUBY_OVERHANG_EM) - 0.5);
 }
 
 {

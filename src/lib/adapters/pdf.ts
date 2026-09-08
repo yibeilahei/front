@@ -14,7 +14,7 @@ import type {
   VerticalPager,
 } from "../types.ts";
 
-const SUPERSAMPLE = 2;
+const SUPERSAMPLE = 1;
 const MAX_EDGE = 4096;
 const PDF_MAGIC = [0x25, 0x50, 0x44, 0x46, 0x2d]; // %PDF-
 
