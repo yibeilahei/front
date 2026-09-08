@@ -11,6 +11,8 @@ assert.equal(isUprightVerticalChar("ー"), false);
 assert.equal(isUprightVerticalChar("―"), false);
 assert.equal(isUprightVerticalChar("〈"), false);
 assert.equal(isUprightVerticalChar("「"), true);
+assert.equal(isUprightVerticalChar("〝"), true);
+assert.equal(isUprightVerticalChar("〟"), true);
 
 const tall = { w: 20, h: 40 };
 const square = { w: 34, h: 34 };
@@ -24,6 +26,7 @@ assert.equal(glyphNeedsSidewaysRotate("ー", "mixed", square.w, square.h), true)
 assert.equal(glyphNeedsSidewaysRotate("―", "mixed", square.w, square.h), true);
 assert.equal(glyphNeedsSidewaysRotate("〈", "mixed", square.w, square.h), true);
 assert.equal(glyphNeedsSidewaysRotate("「", "mixed", tall.w, tall.h), false);
+assert.equal(glyphNeedsSidewaysRotate("〝", "mixed", tall.w, tall.h), false);
 assert.equal(glyphNeedsSidewaysRotate("ー", "upright", tall.w, tall.h), false);
 
 console.log("uprightChar tests passed");
