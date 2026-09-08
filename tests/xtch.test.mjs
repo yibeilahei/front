@@ -78,6 +78,18 @@ const black = await encodeXthPage(rgbaFill(width, height, 0), width, height);
 const blackDecoded = await decodeXthPage(black);
 assert.ok(blackDecoded.rgba.every((v, i) => (i % 4 === 3 ? v === 255 : v === 0)), 'black round-trip');
 
+async function quantizedGray(gray) {
+  const page = await encodeXthPage(rgbaFill(8, 8, gray), 8, 8);
+  return (await decodeXthPage(page)).rgba[0];
+}
+assert.equal(await quantizedGray(255), 255);
+assert.equal(await quantizedGray(192), 255, 'Cookbook white bin includes 192');
+assert.equal(await quantizedGray(191), 170);
+assert.equal(await quantizedGray(128), 170, 'Cookbook light bin includes 128');
+assert.equal(await quantizedGray(127), 85);
+assert.equal(await quantizedGray(64), 85, 'Cookbook dark bin includes 64');
+assert.equal(await quantizedGray(63), 0);
+
 // Incompressible content should fall back to raw storage (compression=0)
 // rather than let deflate overhead make the page bigger. Use a larger page
 // so quantization noise doesn't accidentally leave compressible structure.

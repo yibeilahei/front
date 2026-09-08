@@ -24,7 +24,7 @@ import {
 
 const systemCss = systemFontFaceCss();
 const MAX_SECTION_PAGES = 5000;
-const SNAP_SCALE = 2;
+const SNAP_SCALE = 3; // matches Cookbook's default 3× raster
 
 export function isWebKitEngine(): boolean {
   if (typeof navigator === "undefined") return false;
@@ -113,15 +113,20 @@ async function htmlToImageSnapshot(vp: HTMLElement, w: number, h: number): Promi
   const canvas = await toCanvas(vp, {
     width: w,
     height: h,
-    pixelRatio: 1,
+    pixelRatio: SNAP_SCALE,
     backgroundColor: "#ffffff",
     cacheBust: false,
     fontEmbedCSS: systemCss,
     skipAutoScale: true,
   });
-  const ctx = canvas.getContext("2d");
-  if (!ctx) throw new Error(t("snapshotFailed"));
-  return new Uint8ClampedArray(ctx.getImageData(0, 0, w, h).data);
+  const out = outputCanvas(w, h);
+  const outCtx = out.getContext("2d", { willReadFrequently: true });
+  if (!outCtx) throw new Error(t("snapshotFailed"));
+  outCtx.imageSmoothingEnabled = true;
+  outCtx.imageSmoothingQuality = "high";
+  outCtx.clearRect(0, 0, w, h);
+  outCtx.drawImage(canvas, 0, 0, w, h);
+  return new Uint8ClampedArray(outCtx.getImageData(0, 0, w, h).data);
 }
 
 function rectsOverlap(

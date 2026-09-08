@@ -21,10 +21,11 @@ const XTH_LEVEL = {
   BLACK: 0b11,
 } as const;
 
+/** Same 4-level bins as Cookbook (`>=192 / >=128 / >=64`). */
 function grayToXthLevel(gray: number): number {
-  if (gray > 212) return XTH_LEVEL.WHITE;
-  if (gray > 127) return XTH_LEVEL.LIGHT;
-  if (gray > 42) return XTH_LEVEL.DARK;
+  if (gray >= 192) return XTH_LEVEL.WHITE;
+  if (gray >= 128) return XTH_LEVEL.LIGHT;
+  if (gray >= 64) return XTH_LEVEL.DARK;
   return XTH_LEVEL.BLACK;
 }
 
