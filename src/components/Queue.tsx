@@ -48,6 +48,7 @@ export function Queue({
         };
         const writing = job.axis ? t(job.axis, undefined, locale) : "…";
         const fontLabel = used.fontFamily;
+        const isPdf = job.converter.id === "pdf";
 
         return (
           <div key={job.id} className={`job${job.id === activeId ? " active" : ""}`}>
@@ -59,11 +60,20 @@ export function Queue({
                 <span className="job-title">{job.file.name}</span>
               </div>
               <div className="job-facts">
-                <span className="job-tag">{writing}</span>
-                <span className="job-tag">{used.deviceId}</span>
-                <span className="job-tag">{fontDisplayName(fontLabel, locale)}</span>
-                <span className="job-tag">{used.fontSize}px</span>
-                <span className="job-tag">{used.lineHeight}%</span>
+                {isPdf ? (
+                  <>
+                    <span className="job-tag">PDF</span>
+                    <span className="job-tag">{used.deviceId}</span>
+                  </>
+                ) : (
+                  <>
+                    <span className="job-tag">{writing}</span>
+                    <span className="job-tag">{used.deviceId}</span>
+                    <span className="job-tag">{fontDisplayName(fontLabel, locale)}</span>
+                    <span className="job-tag">{used.fontSize}px</span>
+                    <span className="job-tag">{used.lineHeight}%</span>
+                  </>
+                )}
               </div>
               <div className="job-sub">{job.error || job.message}</div>
             </div>

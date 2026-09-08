@@ -5,7 +5,7 @@ import "./converter.css";
 export const metadata: Metadata = {
   title: "lazahata — 本を XTCH に",
   description:
-    "ブラウザで EPUB、TXT、MOBI、FB2 を XTCH に変換します。ファイルはアップロードしません。",
+    "ブラウザで EPUB、TXT、MOBI、FB2、PDF を XTCH に変換します。ファイルはアップロードしません。",
 };
 
 export const viewport: Viewport = {

@@ -42,6 +42,7 @@ type Props = {
   onBookWritingChange: (mode: WritingMode) => void;
   onBookFontChange: (fontId: string) => void;
   bookIsTxt?: boolean;
+  bookIsPdf?: boolean;
   txtEncoding?: string;
   detectedEncoding?: string | null;
   onTxtEncodingChange?: (encoding: string) => void;
@@ -119,6 +120,7 @@ export function SettingsPanel({
   onBookWritingChange,
   onBookFontChange,
   bookIsTxt = false,
+  bookIsPdf = false,
   txtEncoding = "auto",
   detectedEncoding = null,
   onTxtEncodingChange,
@@ -176,6 +178,10 @@ export function SettingsPanel({
         </div>
       </div>
 
+      {bookIsPdf ? <p className="note">{t("pdfAsIs", undefined, locale)}</p> : null}
+
+      {bookIsPdf ? null : (
+      <>
       <div className="setting-row">
         <div>
           <div className="setting-title">{t("font", undefined, locale)}</div>
@@ -363,6 +369,8 @@ export function SettingsPanel({
           </button>
         </div>
       </div>
+      </>
+      )}
 
       <div className="setting-row">
         <div>
@@ -395,7 +403,7 @@ export function SettingsPanel({
         </label>
       </div>
 
-      <p className="note">{t("note", undefined, locale)}</p>
+      {bookIsPdf ? null : <p className="note">{t("note", undefined, locale)}</p>}
     </aside>
   );
 }

@@ -359,8 +359,6 @@ export function ConverterApp() {
 
       if (skippedSoon.length) {
         showToast(t("formatComing", { names: [...new Set(skippedSoon)].join(", ") }), "warn");
-      } else if (skippedOther.some((name) => /\.pdf$/i.test(name))) {
-        showToast(t("unsupportedPdf"), "warn");
       } else if (skippedOther.length) {
         showToast(t("unsupportedType"), "warn");
       }
@@ -594,6 +592,7 @@ export function ConverterApp() {
           onBookWritingChange={updateBookWriting}
           onBookFontChange={updateBookFont}
           bookIsTxt={activeJob?.converter.id === "txt"}
+          bookIsPdf={activeJob?.converter.id === "pdf"}
           txtEncoding={activeJob?.txtEncoding ?? "auto"}
           detectedEncoding={activeJob?.detectedEncoding ?? null}
           onTxtEncodingChange={updateTxtEncoding}

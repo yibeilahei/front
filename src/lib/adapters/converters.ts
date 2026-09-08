@@ -1,6 +1,6 @@
 /**
- * Format registry. EPUB, TXT, MOBI/AZW, and FB2 are wired.
- * Auto is markup sample → textLooksVertical.
+ * Format registry. EPUB, TXT, MOBI/AZW, FB2, and PDF are wired.
+ * Auto is markup sample → textLooksVertical. PDF is raster, not reflow.
  */
 
 import { encodeXthPage, buildXtchContainer, outputNameFromSource } from "../xtch";
@@ -41,6 +41,8 @@ export async function matchConverterAsync(file: File): Promise<Converter | null>
   if (await isMobiMagic(file)) return converters.find((c) => c.id === "mobi") || null;
   const { isFb2File } = await import("./fb2");
   if (await isFb2File(file)) return converters.find((c) => c.id === "fb2") || null;
+  const { isPdfMagic } = await import("./pdf");
+  if (await isPdfMagic(file)) return converters.find((c) => c.id === "pdf") || null;
   return null;
 }
 
@@ -323,3 +325,28 @@ const Fb2Converter: Converter = {
 };
 
 registerConverter(Fb2Converter);
+
+const PdfConverter: Converter = {
+  id: "pdf",
+  label: "PDF",
+  extensions: [".pdf"],
+  mimeTypes: ["application/pdf"],
+  accepts(file) {
+    return /\.pdf$/i.test(file.name) || file.type === "application/pdf";
+  },
+
+  async sniff(file) {
+    const { sniffPdf } = await import("./pdf");
+    return sniffPdf(file);
+  },
+
+  async load(file, settings, onStatus?: StatusFn) {
+    const { openPdfSession } = await import("./pdf");
+    return openPdfSession(this, file, settings, onStatus);
+  },
+
+  renderPage: renderSessionPage,
+  convert: convertSession,
+};
+
+registerConverter(PdfConverter);

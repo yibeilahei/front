@@ -27,7 +27,7 @@ assert.equal(t("ledeSuffix", undefined, "zh-Hant"), "");
 assert.equal(t("ledeChrome", undefined, "en"), ". Works best on Chrome");
 assert.equal(t("cookbookLink", undefined, "en"), "Cookbook");
 assert.match(t("cookbookPrefix", undefined, "en"), /slow/);
-assert.match(t("unsupportedPdf", undefined, "en"), /PDF/);
+assert.match(t("dropTitle", undefined, "en"), /PDF/);
 assert.equal(t("books", undefined, "zh-Hant"), "圖書");
 
 for (const locale of LOCALES) {
