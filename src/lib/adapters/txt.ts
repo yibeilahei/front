@@ -251,9 +251,10 @@ export async function readTxtFile(
 
 export async function sniffTxt(
   file: File,
-): Promise<{ vertical: false; script: ReturnType<typeof detectScript>; encoding: TxtEncodingId | null }> {
+): Promise<{ markup: string; script: ReturnType<typeof detectScript>; encoding: TxtEncodingId | null }> {
   const { text, detected } = await readTxtFile(file, "auto");
-  return { vertical: false, script: detectScript(text.slice(0, 12000)), encoding: detected };
+  const markup = text.slice(0, 12000);
+  return { markup, script: detectScript(markup), encoding: detected };
 }
 
 export async function bookFromTxt(

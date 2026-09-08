@@ -73,10 +73,9 @@ export type DeviceProfile = {
 /**
  * User writing control.
  *
- * Auto: `textLooksVertical` on a markup/CSS sample → vertical, else
- * horizontal. Override always wins. TXT has no markup signal →
- * horizontal. Auto does not use language, glyphs, filename, or
- * `page-progression-direction`. False horizontal is the safer miss.
+ * Auto: Japanese novel / 縦書き CSS → vertical, else horizontal.
+ * Override always wins. `page-progression-direction` alone is not used
+ * (manga is often 横書き). False 縦書き is the safer miss.
  */
 export type WritingMode = "auto" | "horizontal" | "vertical";
 

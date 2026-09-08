@@ -1,6 +1,6 @@
 /**
  * Format registry. EPUB, TXT, MOBI/AZW, FB2, and PDF are wired.
- * Auto is markup sample → textLooksVertical. PDF is raster, not reflow.
+ * Auto is Japanese-first (縦書き CSS / 電書協 / kana). PDF is raster, not reflow.
  */
 
 import { encodeXthPage, buildXtchContainer, outputNameFromSource } from "../xtch";
@@ -241,7 +241,7 @@ const TxtConverter: Converter = {
   async sniff(file) {
     const { sniffTxt } = await import("./txt");
     const sniff = await sniffTxt(file);
-    return { markup: "", script: sniff.script, encoding: sniff.encoding };
+    return { markup: sniff.markup, script: sniff.script, encoding: sniff.encoding };
   },
 
   async load(file, settings, onStatus?: StatusFn, opts?: { maxPages?: number }) {
