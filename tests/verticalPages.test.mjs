@@ -85,7 +85,7 @@ function assertNoColumnCut(columns, pages, clipRight) {
   assert.ok(columns[2].left >= page1Left - 0.5);
 }
 
-// Default X4: 34px × 120% = 40.8px pitch, 12px margin, 480px page.
+// X4 at 34px × 120% = 40.8px pitch, 12px margin, 480px page.
 // A 480px window would slice column 12 (~19px visible). Packing must keep it whole.
 {
   const pitch = 40.8;

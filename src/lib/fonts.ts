@@ -2,7 +2,7 @@
 
 import JSZip from "jszip";
 
-export type CjkFace = "jp" | "tc";
+export type CjkFace = "jp" | "tc" | "sc";
 export type ScriptId = "latin" | CjkFace;
 
 export type FontSpec = {
@@ -21,7 +21,7 @@ export type FontChoice = {
 };
 
 export function isCjkFace(id: string | null | undefined): id is CjkFace {
-  return id === "jp" || id === "tc";
+  return id === "jp" || id === "tc" || id === "sc";
 }
 
 export const LATIN_FONT: FontSpec = {
@@ -44,13 +44,23 @@ export const CJK_FONTS: Record<CjkFace, FontSpec> = {
     file: "NotoSerifTC-Regular.ttf",
     url: "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notoseriftc/NotoSerifTC%5Bwght%5D.ttf",
   },
+  sc: {
+    id: "sc",
+    family: "Noto Serif SC",
+    file: "NotoSerifSC-Regular.ttf",
+    url: "https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/notoserifsc/NotoSerifSC%5Bwght%5D.ttf",
+  },
 };
 
-export const CJK_ORDER: CjkFace[] = ["jp", "tc"];
+export const CJK_ORDER: CjkFace[] = ["jp", "tc", "sc"];
 
 const SYSTEM_STACKS: Record<ScriptId, string[]> = {
-  latin: ["Georgia", "Palatino Linotype", "Palatino", "Times New Roman", "Times", "Noto Serif"],
+  latin: ["Georgia", "Palatino Linotype", "Palatino", "Noto Serif"],
   jp: [
+    "Hiragino Mincho ProN W6",
+    "HiraMinProN-W6",
+    "Hiragino Mincho Pro W6",
+    "HiraMinPro-W6",
     "Hiragino Mincho ProN",
     "Hiragino Mincho ProN W3",
     "HiraMinProN-W3",
@@ -59,11 +69,10 @@ const SYSTEM_STACKS: Record<ScriptId, string[]> = {
     "HiraMinPro-W3",
     "Yu Mincho",
     "YuMincho",
-    "MS Mincho",
-    "MS PMincho",
     "Noto Serif JP",
   ],
-  tc: ["Songti TC", "LiSong Pro", "PMingLiU", "MingLiU", "Noto Serif TC"],
+  tc: ["Songti TC", "Noto Serif TC"],
+  sc: ["Songti SC", "STSong", "Noto Serif SC"],
 };
 
 const LATIN_STACK = SYSTEM_STACKS.latin;
@@ -71,10 +80,13 @@ const LATIN_STACK = SYSTEM_STACKS.latin;
 export const FONT_CHOICES: FontChoice[] = [
   { id: "auto", family: "Auto", locals: [], group: "auto" },
   { id: "georgia", family: "Georgia", locals: ["Georgia"], group: "latin" },
-  { id: "times", family: "Times New Roman", locals: ["Times New Roman", "Times"], group: "latin" },
-  { id: "palatino", family: "Palatino", locals: ["Palatino", "Palatino Linotype", "Book Antiqua"], group: "latin" },
   { id: "literata", family: "Literata", locals: ["Literata"], group: "latin", cdn: LATIN_FONT },
-  { id: "hiragino", family: "Hiragino Mincho ProN", locals: [
+  { id: "palatino", family: "Palatino", locals: ["Palatino", "Palatino Linotype", "Book Antiqua"], group: "latin" },
+  { id: "hiragino", family: "Hiragino Mincho ProN W6", locals: [
+    "Hiragino Mincho ProN W6",
+    "HiraMinProN-W6",
+    "Hiragino Mincho Pro W6",
+    "HiraMinPro-W6",
     "Hiragino Mincho ProN",
     "Hiragino Mincho ProN W3",
     "HiraMinProN-W3",
@@ -83,40 +95,41 @@ export const FONT_CHOICES: FontChoice[] = [
     "HiraMinPro-W3",
   ], group: "jp" },
   { id: "yu-mincho", family: "Yu Mincho", locals: ["Yu Mincho", "YuMincho"], group: "jp" },
-  { id: "ms-mincho", family: "MS Mincho", locals: ["MS Mincho", "MS PMincho"], group: "jp" },
   { id: "noto-jp", family: "Noto Serif JP", locals: ["Noto Serif JP"], group: "jp", cdn: CJK_FONTS.jp },
   { id: "songti-tc", family: "Songti TC", locals: ["Songti TC"], group: "tc" },
-  { id: "lisong", family: "LiSong Pro", locals: ["LiSong Pro"], group: "tc" },
-  { id: "pmingliu", family: "PMingLiU", locals: ["PMingLiU", "MingLiU"], group: "tc" },
   { id: "noto-tc", family: "Noto Serif TC", locals: ["Noto Serif TC"], group: "tc", cdn: CJK_FONTS.tc },
+  { id: "songti-sc", family: "Songti SC", locals: ["Songti SC", "STSong"], group: "sc" },
+  { id: "noto-sc", family: "Noto Serif SC", locals: ["Noto Serif SC"], group: "sc", cdn: CJK_FONTS.sc },
 ];
 
 export type FontGroup = { id: FontChoice["group"]; choiceIds: string[] };
 
 export const FONT_GROUPS: FontGroup[] = [
   { id: "auto", choiceIds: ["auto"] },
-  { id: "latin", choiceIds: ["georgia", "times", "palatino", "literata"] },
-  { id: "jp", choiceIds: ["hiragino", "yu-mincho", "ms-mincho", "noto-jp"] },
-  { id: "tc", choiceIds: ["songti-tc", "lisong", "pmingliu", "noto-tc"] },
+  { id: "latin", choiceIds: ["georgia", "literata", "palatino"] },
+  { id: "jp", choiceIds: ["hiragino", "yu-mincho", "noto-jp"] },
+  { id: "tc", choiceIds: ["songti-tc", "noto-tc"] },
+  { id: "sc", choiceIds: ["songti-sc", "noto-sc"] },
 ];
 
-type FontLocale = "en" | "ja" | "zh-Hant";
+type FontLocale = "en" | "ja" | "zh-Hant" | "zh-Hans";
 
 const FONT_DISPLAY: Record<string, Partial<Record<FontLocale, string>>> = {
-  "Hiragino Mincho ProN": { ja: "ヒラギノ明朝 ProN", "zh-Hant": "冬青明朝 ProN" },
-  "Hiragino Mincho ProN W3": { ja: "ヒラギノ明朝 ProN", "zh-Hant": "冬青明朝 ProN" },
-  "HiraMinProN-W3": { ja: "ヒラギノ明朝 ProN", "zh-Hant": "冬青明朝 ProN" },
-  "Hiragino Mincho Pro": { ja: "ヒラギノ明朝 Pro", "zh-Hant": "冬青明朝 Pro" },
-  "Hiragino Mincho Pro W3": { ja: "ヒラギノ明朝 Pro", "zh-Hant": "冬青明朝 Pro" },
-  "HiraMinPro-W3": { ja: "ヒラギノ明朝 Pro", "zh-Hant": "冬青明朝 Pro" },
-  "Yu Mincho": { ja: "游明朝", "zh-Hant": "游明朝" },
-  YuMincho: { ja: "游明朝", "zh-Hant": "游明朝" },
-  "MS Mincho": { ja: "ＭＳ 明朝", "zh-Hant": "MS 明朝" },
-  "MS PMincho": { ja: "ＭＳ Ｐ明朝", "zh-Hant": "MS P明朝" },
-  "Songti TC": { ja: "宋体-繁", "zh-Hant": "宋體-繁" },
-  "LiSong Pro": { ja: "儷宋 Pro", "zh-Hant": "儷宋 Pro" },
-  PMingLiU: { ja: "新細明體", "zh-Hant": "新細明體" },
-  MingLiU: { ja: "細明體", "zh-Hant": "細明體" },
+  "Hiragino Mincho ProN": { ja: "ヒラギノ明朝 ProN", "zh-Hant": "冬青明朝 ProN", "zh-Hans": "冬青明朝 ProN" },
+  "Hiragino Mincho ProN W6": { ja: "ヒラギノ明朝 ProN W6", "zh-Hant": "冬青明朝 ProN W6", "zh-Hans": "冬青明朝 ProN W6" },
+  "HiraMinProN-W6": { ja: "ヒラギノ明朝 ProN W6", "zh-Hant": "冬青明朝 ProN W6", "zh-Hans": "冬青明朝 ProN W6" },
+  "Hiragino Mincho Pro W6": { ja: "ヒラギノ明朝 Pro W6", "zh-Hant": "冬青明朝 Pro W6", "zh-Hans": "冬青明朝 Pro W6" },
+  "HiraMinPro-W6": { ja: "ヒラギノ明朝 Pro W6", "zh-Hant": "冬青明朝 Pro W6", "zh-Hans": "冬青明朝 Pro W6" },
+  "Hiragino Mincho ProN W3": { ja: "ヒラギノ明朝 ProN", "zh-Hant": "冬青明朝 ProN", "zh-Hans": "冬青明朝 ProN" },
+  "HiraMinProN-W3": { ja: "ヒラギノ明朝 ProN", "zh-Hant": "冬青明朝 ProN", "zh-Hans": "冬青明朝 ProN" },
+  "Hiragino Mincho Pro": { ja: "ヒラギノ明朝 Pro", "zh-Hant": "冬青明朝 Pro", "zh-Hans": "冬青明朝 Pro" },
+  "Hiragino Mincho Pro W3": { ja: "ヒラギノ明朝 Pro", "zh-Hant": "冬青明朝 Pro", "zh-Hans": "冬青明朝 Pro" },
+  "HiraMinPro-W3": { ja: "ヒラギノ明朝 Pro", "zh-Hant": "冬青明朝 Pro", "zh-Hans": "冬青明朝 Pro" },
+  "Yu Mincho": { ja: "游明朝", "zh-Hant": "游明朝", "zh-Hans": "游明朝" },
+  YuMincho: { ja: "游明朝", "zh-Hant": "游明朝", "zh-Hans": "游明朝" },
+  "Songti TC": { ja: "宋体-繁", "zh-Hant": "宋體-繁", "zh-Hans": "宋体-繁" },
+  "Songti SC": { ja: "宋体-简", "zh-Hant": "宋體-簡", "zh-Hans": "宋体-简" },
+  STSong: { ja: "华文宋体", "zh-Hant": "華文宋體", "zh-Hans": "华文宋体" },
 };
 
 /** Localized label for a CSS family name. English (and unknown faces) stay as-is. */
@@ -136,7 +149,10 @@ export function scriptFromLang(lang?: string): ScriptId {
   const lower = String(lang || "").toLowerCase().replace(/_/g, "-");
   if (!lower) return "latin";
   if (/^(ja|jpn)([-]|$)/.test(lower)) return "jp";
-  if (/^(zh|yue|chi|zho)([-]|$)/.test(lower)) return "tc";
+  if (/^(yue)([-]|$)/.test(lower)) return "tc";
+  if (/^zh-(hant|tw|hk|mo|cht)\b/.test(lower)) return "tc";
+  if (/^zh-(hans|cn|sg|chs)\b/.test(lower)) return "sc";
+  if (/^(zh|chi|zho)([-]|$)/.test(lower)) return "sc";
   return "latin";
 }
 
@@ -165,6 +181,7 @@ export const SCRIPT_GROUP_LABELS: Record<string, string> = {
   latin: "Latin",
   jp: "Japanese",
   tc: "Traditional Chinese",
+  sc: "Simplified Chinese",
 };
 
 export function extraScriptChoices(scripts: Array<ScriptId | null | undefined>): FontChoice[] {
@@ -411,6 +428,22 @@ export function fontChoice(id: string | undefined): FontChoice {
   return FONT_CHOICES[0];
 }
 
+/** Characters that live in one Chinese orthography and not the other. */
+const SC_ONLY = "国这们来对会时过发经为说还现开关门东车长书学觉观战广从无与产动医乐买卖头实应当后么汉语请让进种样点电";
+const TC_ONLY = "國這們來對會時過發經為說還現開關門東車長書學覺觀戰廣從無與產動醫樂買賣頭實應當後麼漢語請讓進種樣點電";
+
+function hanFaceFromText(text: string): CjkFace | null {
+  if (!/[\u4E00-\u9FFF]/.test(text)) return null;
+  let sc = 0;
+  let tc = 0;
+  for (const ch of text) {
+    if (SC_ONLY.includes(ch)) sc += 1;
+    else if (TC_ONLY.includes(ch)) tc += 1;
+  }
+  if (sc === 0 && tc === 0) return "tc";
+  return sc >= tc ? "sc" : "tc";
+}
+
 /** Script/fonts only. Not used for Auto writing-mode (see detectVertical). */
 export function detectScript(text: string): ScriptId | null {
   const dcLang = text.match(/<dc:language[^>]*>\s*([^<]+)/i);
@@ -419,7 +452,8 @@ export function detectScript(text: string): ScriptId | null {
     if (script !== "latin") return script;
   }
   if (/[\u3040-\u30FF]/.test(text)) return "jp";
-  if (/[\u4E00-\u9FFF]/.test(text)) return "tc";
+  const han = hanFaceFromText(text);
+  if (han) return han;
   if (dcLang && isLatinLang(dcLang[1].trim())) return "latin";
   const xmlLang = text.match(/xml:lang\s*=\s*["']([^"']+)/i);
   if (xmlLang) {

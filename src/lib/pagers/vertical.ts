@@ -68,7 +68,7 @@ function bookCss(
   primary: CjkFace,
 ): string {
   const fontSize = Number(settings.fontSize) || 34;
-  const lineHeight = (Number(settings.lineHeight) || 120) / 100;
+  const lineHeight = (Number(settings.lineHeight) || 100) / 100;
   const pitch = columnPitch(w, fontSize, lineHeight);
   const align = textAlignCss(Number(settings.textAlign));
   // CSS columns + vertical-rl overlap glyphs (especially ruby) in Blink and
@@ -370,7 +370,7 @@ export async function createVerticalPager(
   usedFontFamily: string;
 }> {
   const { w, h } = settings.device;
-  const pitch = columnPitch(w, Number(settings.fontSize) || 34, (Number(settings.lineHeight) || 120) / 100);
+  const pitch = columnPitch(w, Number(settings.fontSize) || 34, (Number(settings.lineHeight) || 100) / 100);
   if (onStatus) onStatus(t("openingFoliate"));
   const cjkFace: CjkFace | null = isCjkFace(book.script)
     ? book.script

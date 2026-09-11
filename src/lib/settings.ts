@@ -10,7 +10,7 @@ export const DEVICE_PROFILES: Record<string, DeviceProfile> = {
 export const DEFAULT_SETTINGS: PersistSettings = {
   deviceId: "X4",
   fontSize: 34,
-  lineHeight: 120,
+  lineHeight: 100,
   textAlign: 3,
   hyphenation: 0,
   renameFromTitle: false,

@@ -14,7 +14,7 @@ export const RUBY_OVERHANG_EM = 0.55;
  */
 export function columnPitch(pageW: number, fontSize: number, lineHeightRatio: number): number {
   const size = Number(fontSize) || 34;
-  const ratio = Number(lineHeightRatio) || 1.2;
+  const ratio = Number(lineHeightRatio) || 1;
   const minPitch = Math.max(size * ratio, size * (1 + RUBY_OVERHANG_EM));
   const cols = Math.max(1, Math.floor(pageW / Math.max(minPitch, 1)));
   return pageW / cols;

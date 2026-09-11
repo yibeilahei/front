@@ -46,7 +46,7 @@ import { SettingsPanel } from "./SettingsPanel";
 import { Toast } from "./Toast";
 
 const PREVIEW_PAGES = 20;
-const FIRMWARE_URL = "/firmware/";
+const CROSSXTCH_URL = "/crossxtch/";
 const COOKBOOK_URL = "/cookbook/";
 
 function paintFrame(
@@ -456,8 +456,8 @@ export function ConverterApp() {
         <div className="hero-top">
           <h1>lazahata</h1>
           <div className="hero-links">
-            <Link className="hero-link" href={FIRMWARE_URL}>
-              {t("firmware", undefined, locale)}
+            <Link className="hero-link" href={CROSSXTCH_URL}>
+              {t("crossxtchLink", undefined, locale)}
             </Link>
             <Link className="hero-link" href={COOKBOOK_URL}>
               {t("cookbookLink", undefined, locale)}

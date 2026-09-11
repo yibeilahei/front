@@ -8,7 +8,7 @@ export function SiteHeader({
   current,
   locale,
 }: {
-  current: "firmware" | "cookbook";
+  current: "crossxtch" | "cookbook";
   locale: Locale;
 }) {
   return (
@@ -18,9 +18,9 @@ export function SiteHeader({
           <Link href="/">lazahata</Link>
         </h1>
         <div className="hero-links">
-          {current !== "firmware" ? (
-            <Link className="hero-link" href="/firmware/">
-              {t("firmware", undefined, locale)}
+          {current !== "crossxtch" ? (
+            <Link className="hero-link" href="/crossxtch/">
+              {t("crossxtchLink", undefined, locale)}
             </Link>
           ) : null}
           {current !== "cookbook" ? (

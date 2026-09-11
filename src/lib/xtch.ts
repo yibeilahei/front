@@ -4,7 +4,7 @@
  * 2-bit grayscale, vertical scan, columns right-to-left.
  *
  * Optional per-page raw DEFLATE (RFC 1951, no zlib/gzip wrapper) via fflate
- * — matches the "puff" inflate vendored into lazahata firmware
+ * — matches the "puff" inflate vendored into crossxtch
  * (lib/Xtch/puff.c). Off by default: stock CrossPoint firmware cannot
  * inflate compressed pages. When on, falls back to raw if compression
  * doesn't shrink the page. fflate is used (over CompressionStream) because

@@ -25,6 +25,7 @@ const FONT_GROUP_KEYS: Record<string, MessageKey> = {
   latin: "fontGroupLatin",
   jp: "fontGroupJp",
   tc: "fontGroupTc",
+  sc: "fontGroupSc",
 };
 
 type BookWriting = {

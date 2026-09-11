@@ -37,7 +37,7 @@ function textAlignCss(align: number): string {
 
 function bookCss(settings: ConvertSettings, fontCss: string, w: number, h: number, script: ScriptId | null): string {
   const fontSize = Number(settings.fontSize) || 34;
-  const lineHeight = (Number(settings.lineHeight) || 120) / 100;
+  const lineHeight = (Number(settings.lineHeight) || 100) / 100;
   const align = textAlignCss(Number(settings.textAlign));
   return `
     ${fontCss}

@@ -1,5 +1,5 @@
 export const REPO = {
-  firmware: "https://github.com/yibeilahei/lazahata",
+  crossxtch: "https://github.com/yibeilahei/crossxtch",
   cookbook: "https://github.com/yibeilahei/cookbook",
 };
 
