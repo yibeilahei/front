@@ -1,6 +1,6 @@
 "use client";
 
-import { fontDisplayName, pickUsedFontFamily } from "@/lib/fonts";
+import { fontDisplayName, pickUsedFontFamily, resolvedBookScript } from "@/lib/fonts";
 import { t, type Locale } from "@/lib/i18n";
 import type { Job, PersistSettings } from "@/lib/types";
 
@@ -41,7 +41,8 @@ export function Queue({
           fontId: job.fontId,
           fontFamily: pickUsedFontFamily(
             job.fontId,
-            job.detectedScript || (job.axis === "vertical" ? "jp" : null),
+            resolvedBookScript(job.bookLanguage, job.detectedScript) ||
+              (job.axis === "vertical" ? "jp" : null),
           ),
           fontSize: settings.fontSize,
           lineHeight: settings.lineHeight,

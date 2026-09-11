@@ -27,7 +27,12 @@ import {
   uid,
 } from "@/lib/settings";
 import { axisFromSample } from "@/lib/detectVertical";
-import { detectScript } from "@/lib/fonts";
+import {
+  detectScript,
+  fontGroupsForBookLanguage,
+  showsAllBookFonts,
+  type BookLanguage,
+} from "@/lib/fonts";
 import {
   applyDocumentLocale,
   DEFAULT_LOCALE,
@@ -77,6 +82,8 @@ export function ConverterApp() {
   const [previewTitle, setPreviewTitle] = useState(t("noBook"));
   const [previewPage, setPreviewPage] = useState(t("dropToPreview"));
   const [pageCount, setPageCount] = useState(0);
+  const [bookLanguage, setBookLanguage] = useState<BookLanguage>("auto");
+  const [bookFontId, setBookFontId] = useState("auto");
 
   const xtchRef = useRef<XtchBook | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -87,8 +94,12 @@ export function ConverterApp() {
   const toastTimer = useRef<number | null>(null);
   const convertingRef = useRef(false);
   const convertQueueRef = useRef<((opts?: { maxPages?: number; download?: boolean }) => Promise<void>) | null>(null);
+  const bookLanguageRef = useRef(bookLanguage);
+  const bookFontIdRef = useRef(bookFontId);
 
   jobStateRef.current = jobState;
+  bookLanguageRef.current = bookLanguage;
+  bookFontIdRef.current = bookFontId;
   const { jobs, activeId } = jobState;
 
   const dispatchJob = useCallback((action: JobAction) => {
@@ -260,10 +271,57 @@ export function ConverterApp() {
   }, [requeueActive]);
 
   const updateBookFont = useCallback((fontId: string) => {
+    setBookFontId(fontId);
     const job = jobStateRef.current.jobs.find((j) => j.id === jobStateRef.current.activeId);
     if (!job || job.fontId === fontId) return;
     requeueActive({ type: "patch", id: job.id, patch: { fontId }, message: t("waitingReconvert") });
   }, [requeueActive]);
+
+  const updateBookLanguage = useCallback((next: BookLanguage) => {
+    setBookLanguage(next);
+    const currentFont = bookFontIdRef.current;
+    const detected =
+      jobStateRef.current.jobs.find((j) => j.id === jobStateRef.current.activeId)?.detectedScript ??
+      null;
+    const allowed = new Set(
+      fontGroupsForBookLanguage(next, detected).flatMap((group) => group.choiceIds),
+    );
+    const fontId =
+      currentFont === "auto" ||
+      allowed.has(currentFont) ||
+      showsAllBookFonts(next, detected)
+        ? currentFont
+        : "auto";
+    if (fontId !== currentFont) setBookFontId(fontId);
+    const job = jobStateRef.current.jobs.find((j) => j.id === jobStateRef.current.activeId);
+    if (!job || (job.bookLanguage === next && job.fontId === fontId)) return;
+    requeueActive({
+      type: "patch",
+      id: job.id,
+      patch: { bookLanguage: next, fontId },
+      message: t("waitingReconvert"),
+    });
+  }, [requeueActive]);
+
+  useEffect(() => {
+    const job = jobStateRef.current.jobs.find((j) => j.id === jobState.activeId);
+    if (!job) return;
+    setBookLanguage(job.bookLanguage);
+    setBookFontId(job.fontId);
+  }, [jobState.activeId]);
+
+  useEffect(() => {
+    if (converting) return;
+    const job = jobStateRef.current.jobs.find((j) => j.id === jobStateRef.current.activeId);
+    if (!job) return;
+    const language = bookLanguageRef.current;
+    const fontId = bookFontIdRef.current;
+    if (job.bookLanguage !== language) {
+      updateBookLanguage(language);
+      return;
+    }
+    if (job.fontId !== fontId) updateBookFont(fontId);
+  }, [converting, updateBookLanguage, updateBookFont]);
 
   const updateTxtEncoding = useCallback(
     (txtEncoding: string) => {
@@ -305,7 +363,16 @@ export function ConverterApp() {
             (j) => j.file.name === file.name && j.file.size === file.size,
           ) || nextJobs.some((j) => j.file.name === file.name && j.file.size === file.size);
           if (exists) continue;
-          nextJobs.push(createJob(file, converter, uid(), t("detectingWriting")));
+          nextJobs.push(
+            createJob(
+              file,
+              converter,
+              uid(),
+              t("detectingWriting"),
+              bookLanguageRef.current,
+              bookFontIdRef.current,
+            ),
+          );
           continue;
         }
         const soon = comingSoonFor(file.name);
@@ -588,8 +655,10 @@ export function ConverterApp() {
               : null
           }
           bookScript={activeJob?.detectedScript ?? null}
-          bookFontId={activeJob?.fontId ?? "auto"}
+          bookLanguage={bookLanguage}
+          bookFontId={bookFontId}
           onBookWritingChange={updateBookWriting}
+          onBookLanguageChange={updateBookLanguage}
           onBookFontChange={updateBookFont}
           bookIsTxt={activeJob?.converter.id === "txt"}
           bookIsPdf={activeJob?.converter.id === "pdf"}

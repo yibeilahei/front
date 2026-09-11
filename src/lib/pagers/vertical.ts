@@ -374,9 +374,11 @@ export async function createVerticalPager(
   if (onStatus) onStatus(t("openingFoliate"));
   const cjkFace: CjkFace | null = isCjkFace(book.script)
     ? book.script
-    : opts?.file
-      ? await detectCjkFaceFromEpub(opts.file)
-      : null;
+    : settings.script !== undefined
+      ? null
+      : opts?.file
+        ? await detectCjkFaceFromEpub(opts.file)
+        : null;
   const usedFontFamily = pickUsedFontFamily(settings.fontId, cjkFace);
   const css = bookCss(settings, systemCss, w, h, cjkFace || "jp");
 

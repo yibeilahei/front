@@ -127,7 +127,7 @@ assert.deepEqual(localFontNamesForLang("km-KH"), localFontNamesForLang("en"));
 }
 {
   assert.deepEqual(extraScriptChoices(["jp", "tc", "sc", "latin"]), []);
-  assert.equal(normalizeFontId("sys:Khmer UI"), "auto");
+  assert.equal(normalizeFontId("sys:Khmer UI"), "sys:Khmer UI");
   assert.equal(normalizeFontId("cdn:khmr"), "auto");
 }
 {

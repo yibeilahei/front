@@ -8,7 +8,7 @@
  * PDF is rasterized as-is (no reflow pager); pages are fitted to the panel.
  */
 
-import type { ScriptId } from "./fonts";
+import type { BookLanguage, ScriptId } from "./fonts";
 
 export type StatusFn = (text: string, kind?: string) => void;
 
@@ -104,6 +104,8 @@ export type ConvertSettings = PersistSettings & {
   fontId: string;
   /** TXT only. `"auto"` uses `detectTxtEncoding`. */
   txtEncoding?: string;
+  /** Set when the user overrides Auto language. Pagers prefer this over sniff. */
+  script?: ScriptId | null;
 };
 
 export type JobUsedSettings = {
@@ -202,6 +204,8 @@ export type Job = {
   detectedEncoding: string | null;
   /** Script/fonts only — not Auto. */
   detectedScript: ScriptId | null;
+  /** User language control. Auto uses `detectedScript`. */
+  bookLanguage: BookLanguage;
   usedSettings: JobUsedSettings | null;
 };
 

@@ -6,7 +6,7 @@
  * markup result for the settings override line.
  */
 
-import type { ScriptId } from "../fonts";
+import type { BookLanguage, ScriptId } from "../fonts";
 import type {
   ConvertResult,
   Converter,
@@ -38,7 +38,14 @@ export function axisFromChoice(
   return sniffedAxis;
 }
 
-export function createJob(file: File, converter: Converter, id: string, message: string): Job {
+export function createJob(
+  file: File,
+  converter: Converter,
+  id: string,
+  message: string,
+  bookLanguage: BookLanguage = "auto",
+  fontId = "auto",
+): Job {
   return {
     id,
     file,
@@ -50,10 +57,11 @@ export function createJob(file: File, converter: Converter, id: string, message:
     choice: "auto",
     axis: null,
     sniffedAxis: null,
-    fontId: "auto",
+    fontId,
     txtEncoding: "auto",
     detectedEncoding: null,
     detectedScript: null,
+    bookLanguage,
     usedSettings: null,
   };
 }
@@ -74,7 +82,7 @@ export type JobAction =
   | {
       type: "patch";
       id: string;
-      patch: Partial<Pick<Job, "fontId" | "txtEncoding" | "detectedScript">>;
+      patch: Partial<Pick<Job, "fontId" | "txtEncoding" | "detectedScript" | "bookLanguage">>;
       message: string;
     }
   | { type: "requeueAll"; message: string }

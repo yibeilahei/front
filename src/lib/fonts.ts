@@ -4,6 +4,10 @@ import JSZip from "jszip";
 
 export type CjkFace = "jp" | "tc" | "sc";
 export type ScriptId = "latin" | CjkFace;
+/** Per-book language control. `other` lists every installed system font. */
+export type BookLanguage = "auto" | ScriptId | "other";
+
+export const BOOK_LANGUAGES: BookLanguage[] = ["auto", "latin", "jp", "sc", "tc", "other"];
 
 export type FontSpec = {
   id: string;
@@ -16,7 +20,7 @@ export type FontChoice = {
   id: string;
   family: string;
   locals: string[];
-  group: "auto" | ScriptId;
+  group: "auto" | ScriptId | "other";
   cdn?: FontSpec;
 };
 
@@ -82,6 +86,9 @@ export const FONT_CHOICES: FontChoice[] = [
   { id: "georgia", family: "Georgia", locals: ["Georgia"], group: "latin" },
   { id: "literata", family: "Literata", locals: ["Literata"], group: "latin", cdn: LATIN_FONT },
   { id: "palatino", family: "Palatino", locals: ["Palatino", "Palatino Linotype", "Book Antiqua"], group: "latin" },
+  { id: "cambria", family: "Cambria", locals: ["Cambria"], group: "latin" },
+  { id: "iowan", family: "Iowan Old Style", locals: ["Iowan Old Style"], group: "latin" },
+  { id: "charter", family: "Charter", locals: ["Charter", "Bitstream Charter"], group: "latin" },
   { id: "hiragino", family: "Hiragino Mincho ProN W6", locals: [
     "Hiragino Mincho ProN W6",
     "HiraMinProN-W6",
@@ -95,21 +102,37 @@ export const FONT_CHOICES: FontChoice[] = [
     "HiraMinPro-W3",
   ], group: "jp" },
   { id: "yu-mincho", family: "Yu Mincho", locals: ["Yu Mincho", "YuMincho"], group: "jp" },
+  { id: "yu-mincho-demibold", family: "Yu Mincho Demibold", locals: [
+    "Yu Mincho Demibold",
+    "YuMincho-Demibold",
+    "YuMincho Demibold",
+    "Yu Mincho DemiBold",
+  ], group: "jp" },
+  { id: "hgs-mincho", family: "HGMinchoE", locals: ["HGMinchoE", "HGSMinchoE", "HGS明朝E", "HG明朝E", "ＨＧ明朝Ｅ"], group: "jp" },
+  { id: "biz-mincho", family: "BIZ UDMincho", locals: ["BIZ UDMincho", "BIZ UDPMincho", "BIZ UD明朝"], group: "jp" },
   { id: "noto-jp", family: "Noto Serif JP", locals: ["Noto Serif JP"], group: "jp", cdn: CJK_FONTS.jp },
   { id: "songti-tc", family: "Songti TC", locals: ["Songti TC"], group: "tc" },
   { id: "noto-tc", family: "Noto Serif TC", locals: ["Noto Serif TC"], group: "tc", cdn: CJK_FONTS.tc },
+  { id: "pmingliu", family: "PMingLiU", locals: ["PMingLiU", "MingLiU"], group: "tc" },
+  { id: "source-han-tc", family: "Source Han Serif TC", locals: ["Source Han Serif TC", "Source Han Serif TW", "思源宋體"], group: "tc" },
+  { id: "heiti-tc", family: "Heiti TC", locals: ["Heiti TC", "STHeiti"], group: "tc" },
+  { id: "pingfang-tc", family: "PingFang TC", locals: ["PingFang TC", "PingFang HK"], group: "tc" },
   { id: "songti-sc", family: "Songti SC", locals: ["Songti SC", "STSong"], group: "sc" },
   { id: "noto-sc", family: "Noto Serif SC", locals: ["Noto Serif SC"], group: "sc", cdn: CJK_FONTS.sc },
+  { id: "simsun", family: "SimSun", locals: ["SimSun", "NSimSun"], group: "sc" },
+  { id: "source-han-sc", family: "Source Han Serif SC", locals: ["Source Han Serif SC", "Source Han Serif CN", "思源宋体"], group: "sc" },
+  { id: "heiti-sc", family: "Heiti SC", locals: ["Heiti SC", "STHeiti"], group: "sc" },
+  { id: "pingfang-sc", family: "PingFang SC", locals: ["PingFang SC"], group: "sc" },
 ];
 
 export type FontGroup = { id: FontChoice["group"]; choiceIds: string[] };
 
 export const FONT_GROUPS: FontGroup[] = [
   { id: "auto", choiceIds: ["auto"] },
-  { id: "latin", choiceIds: ["georgia", "literata", "palatino"] },
-  { id: "jp", choiceIds: ["hiragino", "yu-mincho", "noto-jp"] },
-  { id: "tc", choiceIds: ["songti-tc", "noto-tc"] },
-  { id: "sc", choiceIds: ["songti-sc", "noto-sc"] },
+  { id: "latin", choiceIds: ["georgia", "literata", "palatino", "cambria", "iowan", "charter"] },
+  { id: "jp", choiceIds: ["hiragino", "yu-mincho", "yu-mincho-demibold", "hgs-mincho", "biz-mincho", "noto-jp"] },
+  { id: "tc", choiceIds: ["songti-tc", "noto-tc", "pmingliu", "source-han-tc", "heiti-tc", "pingfang-tc"] },
+  { id: "sc", choiceIds: ["songti-sc", "noto-sc", "simsun", "source-han-sc", "heiti-sc", "pingfang-sc"] },
 ];
 
 type FontLocale = "en" | "ja" | "zh-Hant" | "zh-Hans";
@@ -127,9 +150,34 @@ const FONT_DISPLAY: Record<string, Partial<Record<FontLocale, string>>> = {
   "HiraMinPro-W3": { ja: "ヒラギノ明朝 Pro", "zh-Hant": "冬青明朝 Pro", "zh-Hans": "冬青明朝 Pro" },
   "Yu Mincho": { ja: "游明朝", "zh-Hant": "游明朝", "zh-Hans": "游明朝" },
   YuMincho: { ja: "游明朝", "zh-Hant": "游明朝", "zh-Hans": "游明朝" },
+  "Yu Mincho Demibold": { ja: "游明朝 Demibold", "zh-Hant": "游明朝 Demibold", "zh-Hans": "游明朝 Demibold" },
+  "YuMincho-Demibold": { ja: "游明朝 Demibold", "zh-Hant": "游明朝 Demibold", "zh-Hans": "游明朝 Demibold" },
+  "YuMincho Demibold": { ja: "游明朝 Demibold", "zh-Hant": "游明朝 Demibold", "zh-Hans": "游明朝 Demibold" },
+  HGMinchoE: { ja: "ＨＧ明朝Ｅ", "zh-Hant": "HG明朝E", "zh-Hans": "HG明朝E" },
+  HGSMinchoE: { ja: "ＨＧＳ明朝Ｅ", "zh-Hant": "HGS明朝E", "zh-Hans": "HGS明朝E" },
+  "HGS明朝E": { ja: "ＨＧＳ明朝Ｅ", "zh-Hant": "HGS明朝E", "zh-Hans": "HGS明朝E" },
+  "BIZ UDMincho": { ja: "BIZ UD明朝", "zh-Hant": "BIZ UD明朝", "zh-Hans": "BIZ UD明朝" },
+  "BIZ UDPMincho": { ja: "BIZ UDP明朝", "zh-Hant": "BIZ UDP明朝", "zh-Hans": "BIZ UDP明朝" },
+  "BIZ UD明朝": { ja: "BIZ UD明朝", "zh-Hant": "BIZ UD明朝", "zh-Hans": "BIZ UD明朝" },
   "Songti TC": { ja: "宋体-繁", "zh-Hant": "宋體-繁", "zh-Hans": "宋体-繁" },
+  "Source Han Serif TC": { ja: "源ノ明朝 TC", "zh-Hant": "思源宋體", "zh-Hans": "思源宋体 TC" },
+  "Source Han Serif TW": { ja: "源ノ明朝 TW", "zh-Hant": "思源宋體 TW", "zh-Hans": "思源宋体 TW" },
+  思源宋體: { ja: "思源宋體", "zh-Hant": "思源宋體", "zh-Hans": "思源宋体" },
+  "Heiti TC": { ja: "黑体-繁", "zh-Hant": "黑體-繁", "zh-Hans": "黑体-繁" },
+  STHeiti: { ja: "华文黑体", "zh-Hant": "華文黑體", "zh-Hans": "华文黑体" },
+  "PingFang TC": { ja: "蘋方-繁", "zh-Hant": "蘋方-繁", "zh-Hans": "苹方-繁" },
+  "PingFang HK": { ja: "蘋方-港", "zh-Hant": "蘋方-港", "zh-Hans": "苹方-港" },
   "Songti SC": { ja: "宋体-简", "zh-Hant": "宋體-簡", "zh-Hans": "宋体-简" },
   STSong: { ja: "华文宋体", "zh-Hant": "華文宋體", "zh-Hans": "华文宋体" },
+  SimSun: { ja: "宋体", "zh-Hant": "宋體", "zh-Hans": "宋体" },
+  NSimSun: { ja: "新宋体", "zh-Hant": "新宋體", "zh-Hans": "新宋体" },
+  "Source Han Serif SC": { ja: "源ノ明朝 SC", "zh-Hant": "思源宋體 SC", "zh-Hans": "思源宋体" },
+  "Source Han Serif CN": { ja: "源ノ明朝 CN", "zh-Hant": "思源宋體 CN", "zh-Hans": "思源宋体 CN" },
+  思源宋体: { ja: "思源宋体", "zh-Hant": "思源宋體", "zh-Hans": "思源宋体" },
+  "Heiti SC": { ja: "黑体-简", "zh-Hant": "黑體-簡", "zh-Hans": "黑体-简" },
+  "PingFang SC": { ja: "苹方-简", "zh-Hant": "蘋方-簡", "zh-Hans": "苹方-简" },
+  PMingLiU: { ja: "新細明體", "zh-Hant": "新細明體", "zh-Hans": "新细明体" },
+  MingLiU: { ja: "細明體", "zh-Hant": "細明體", "zh-Hans": "细明体" },
 };
 
 /** Localized label for a CSS family name. English (and unknown faces) stay as-is. */
@@ -167,7 +215,7 @@ export function scriptsForEngine(
     out.push(script);
   };
   const choice = fontChoice(fontId);
-  if (choice.group !== "auto") add(choice.group);
+  add(scriptFromChoiceGroup(choice.group));
   add(detected);
   for (const lang of langs) add(scriptFromLang(lang));
   return out;
@@ -182,7 +230,167 @@ export const SCRIPT_GROUP_LABELS: Record<string, string> = {
   jp: "Japanese",
   tc: "Traditional Chinese",
   sc: "Simplified Chinese",
+  other: "Other",
 };
+
+const SKIP_SYSTEM_FONTS = new Set(
+  [
+    "lastresort",
+    "last resort",
+    "apple color emoji",
+    "noto color emoji",
+    "segoe ui emoji",
+    "segoe ui symbol",
+    "twemoji mozilla",
+    "emojione color",
+    "android emoji",
+    "wingdings",
+    "wingdings 2",
+    "wingdings 3",
+    "webdings",
+    "marlett",
+    "symbol",
+    "zapf dingbats",
+    "apple symbols",
+    "mt extra",
+    "ms outlook",
+    "ms reference specialty",
+    "bookshelfsymbol 7",
+  ].map((name) => name.toLowerCase()),
+);
+
+const SYSTEM_FONT_PROBE = [
+  "American Typewriter",
+  "Apple LiGothic",
+  "Apple LiSung",
+  "Apple SD Gothic Neo",
+  "AppleMyungjo",
+  "Arial",
+  "Athelas",
+  "Avenir",
+  "Ayuthaya",
+  "Bangla MN",
+  "Baskerville",
+  "Batang",
+  "BIZ UDMincho",
+  "BIZ UDPMincho",
+  "BiauKai",
+  "Bitstream Charter",
+  "Book Antiqua",
+  "Calibri",
+  "Cambria",
+  "Charter",
+  "Cochin",
+  "Constantia",
+  "Courier New",
+  "DejaVu Serif",
+  "DengXian",
+  "Didot",
+  "FangSong",
+  "Futura",
+  "Garamond",
+  "Geeza Pro",
+  "Georgia",
+  "Gill Sans",
+  "Gulim",
+  "Helvetica",
+  "Heiti SC",
+  "Heiti TC",
+  "Helvetica Neue",
+  "HGMinchoE",
+  "HGSMinchoE",
+  "Hiragino Mincho ProN",
+  "Hiragino Mincho ProN W6",
+  "Hiragino Sans",
+  "Hoefler Text",
+  "Iowan Old Style",
+  "IPAMincho",
+  "IPAexMincho",
+  "Iskoola Pota",
+  "KaiTi",
+  "Kaiti SC",
+  "Kaiti TC",
+  "Kozuka Mincho Pr6N",
+  "Liberation Serif",
+  "LiSong Pro",
+  "Literata",
+  "Lucida Bright",
+  "MS Mincho",
+  "MS PMincho",
+  "Malgun Gothic",
+  "Marion",
+  "Menlo",
+  "Microsoft JhengHei",
+  "Microsoft YaHei",
+  "MingLiU",
+  "Nanum Myeongjo",
+  "New York",
+  "Noto Serif",
+  "Noto Serif JP",
+  "Noto Serif KR",
+  "Noto Serif SC",
+  "Noto Serif TC",
+  "Optima",
+  "PT Serif",
+  "Palatino",
+  "Palatino Linotype",
+  "PingFang HK",
+  "PingFang SC",
+  "PingFang TC",
+  "PMingLiU",
+  "STFangsong",
+  "STKaiti",
+  "STSong",
+  "SimSun",
+  "Songti SC",
+  "Songti TC",
+  "Source Han Serif SC",
+  "Source Han Serif TC",
+  "Source Serif 4",
+  "Times",
+  "Times New Roman",
+  "Toppan Bunkyu Mincho",
+  "Yu Gothic",
+  "Yu Mincho",
+  "YuMincho",
+  "YuMincho +36",
+];
+
+export function isBookLanguage(value: unknown): value is BookLanguage {
+  return (
+    value === "auto" ||
+    value === "other" ||
+    value === "latin" ||
+    value === "jp" ||
+    value === "sc" ||
+    value === "tc"
+  );
+}
+
+export function normalizeBookLanguage(value: unknown): BookLanguage {
+  return isBookLanguage(value) ? value : "auto";
+}
+
+/** Script used for Auto font / CSS fallbacks. `other` keeps detection. */
+export function resolvedBookScript(
+  language: BookLanguage | undefined,
+  detected: ScriptId | null,
+): ScriptId | null {
+  if (language === "latin" || language === "jp" || language === "sc" || language === "tc") {
+    return language;
+  }
+  return detected ?? null;
+}
+
+/** JP / EN / SC / TC show recommended fonts only; Other (or unknown Auto) shows all. */
+export function showsAllBookFonts(
+  language: BookLanguage | undefined,
+  detected: ScriptId | null,
+): boolean {
+  if (language === "other") return true;
+  if (language && language !== "auto") return false;
+  return !detected;
+}
 
 export function extraScriptChoices(scripts: Array<ScriptId | null | undefined>): FontChoice[] {
   const seen = new Set<ScriptId>();
@@ -261,8 +469,8 @@ function clustersForScript(script: ScriptId): FaceCluster[] {
   return clusters;
 }
 
-function cdnChoiceForScript(script: ScriptId): FontChoice | undefined {
-  return FONT_CHOICES.find((choice) => choice.group === script && choice.cdn);
+function cdnChoicesForScript(script: ScriptId): FontChoice[] {
+  return FONT_CHOICES.filter((choice) => choice.group === script && choice.cdn);
 }
 
 function choicesForScript(script: ScriptId): FontChoice[] {
@@ -282,9 +490,10 @@ function choicesForScript(script: ScriptId): FontChoice[] {
       cdn: cluster.catalog?.cdn,
     });
   }
-  const cdn = cdnChoiceForScript(script);
-  if (cdn && !out.some((choice) => choice.id === cdn.id || choice.family === cdn.cdn?.family)) {
-    out.push(cdn);
+  for (const cdn of cdnChoicesForScript(script)) {
+    if (!out.some((choice) => choice.id === cdn.id || choice.family === cdn.cdn?.family)) {
+      out.push(cdn);
+    }
   }
   return out;
 }
@@ -306,7 +515,9 @@ export function listBookFontChoices(): FontChoice[] {
 
 export function bookFontChoice(id: string | undefined): FontChoice {
   if (id) {
-    const hit = listBookFontChoices().find((choice) => choice.id === id);
+    const hit =
+      listBookFontChoices().find((choice) => choice.id === id) ||
+      listSystemFontChoicesSync().find((choice) => choice.id === id);
     if (hit) return hit;
   }
   return fontChoice(id);
@@ -394,14 +605,106 @@ export function preferredFontGroups(
   return [...auto, ...first, ...rest];
 }
 
+function recommendedGroup(script: ScriptId): FontGroup {
+  const group = FONT_GROUPS.find((item) => item.id === script);
+  return group || { id: script, choiceIds: [] };
+}
+
+export function fontGroupsForBookLanguage(
+  language: BookLanguage | undefined,
+  detected: ScriptId | null,
+  _availableIds?: ReadonlySet<string> | string[] | null,
+  _browserLang?: string,
+  systemIds?: string[] | null,
+): FontGroup[] {
+  if (showsAllBookFonts(language, detected)) {
+    const ids = systemIds || listSystemFontChoicesSync().map((choice) => choice.id);
+    const groups: FontGroup[] = [{ id: "auto", choiceIds: ["auto"] }];
+    if (ids.length) groups.push({ id: "other", choiceIds: ids });
+    return groups;
+  }
+  const script = resolvedBookScript(language, detected);
+  if (!script) return [{ id: "auto", choiceIds: ["auto"] }];
+  return [{ id: "auto", choiceIds: ["auto"] }, recommendedGroup(script)];
+}
+
+function systemFontChoice(family: string): FontChoice {
+  const script = (Object.keys(SYSTEM_STACKS) as ScriptId[]).find((key) =>
+    SYSTEM_STACKS[key].includes(family),
+  );
+  return { id: `sys:${family}`, family, locals: [family], group: script || "other" };
+}
+
+function isSkippedSystemFont(name: string): boolean {
+  const lower = name.trim().toLowerCase();
+  if (!lower || lower.startsWith(".")) return true;
+  if (SKIP_SYSTEM_FONTS.has(lower)) return true;
+  if (lower.includes("emoji") || lower.includes("dingbat") || lower.includes("wingding")) return true;
+  return false;
+}
+
+let systemFontCache: FontChoice[] | null = null;
+let systemFontPromise: Promise<FontChoice[]> | null = null;
+
+export function listSystemFontChoicesSync(): FontChoice[] {
+  return systemFontCache || [];
+}
+
+export async function listSystemFontChoices(): Promise<FontChoice[]> {
+  if (systemFontCache) return systemFontCache;
+  if (systemFontPromise) return systemFontPromise;
+  systemFontPromise = loadSystemFontChoices().then((fonts) => {
+    systemFontCache = fonts;
+    return fonts;
+  });
+  return systemFontPromise;
+}
+
+async function loadSystemFontChoices(): Promise<FontChoice[]> {
+  const families = new Map<string, string>();
+  const add = (name: string) => {
+    const trimmed = String(name || "").trim();
+    if (isSkippedSystemFont(trimmed)) return;
+    const key = trimmed.toLowerCase();
+    if (!families.has(key)) families.set(key, trimmed);
+  };
+
+  try {
+    const query =
+      typeof window !== "undefined"
+        ? (
+            window as Window & {
+              queryLocalFonts?: () => Promise<Array<{ family?: string }>>;
+            }
+          ).queryLocalFonts
+        : undefined;
+    if (typeof query === "function") {
+      const fonts = await query();
+      for (const font of fonts) {
+        if (font.family) add(font.family);
+      }
+    }
+  } catch {
+    /* permission denied or unsupported */
+  }
+
+  if (!families.size) {
+    for (const name of SYSTEM_FONT_PROBE) {
+      if (firstAvailableFont([name])) add(name);
+    }
+  }
+
+  return [...families.values()]
+    .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: "base" }))
+    .map(systemFontChoice);
+}
+
 export function normalizeFontId(value: unknown): string {
   if (typeof value !== "string" || !value) return "auto";
   if (FONT_CHOICES.some((c) => c.id === value)) return value;
   if (value.startsWith("sys:")) {
     const family = value.slice(4).trim();
-    if (family && Object.values(SYSTEM_STACKS).some((stack) => stack.includes(family))) {
-      return value;
-    }
+    if (family) return value;
   }
   return "auto";
 }
@@ -411,12 +714,7 @@ export function fontChoice(id: string | undefined): FontChoice {
   if (known) return known;
   if (id?.startsWith("sys:")) {
     const family = id.slice(4).trim();
-    if (family) {
-      const script = (Object.keys(SYSTEM_STACKS) as ScriptId[]).find((key) =>
-        SYSTEM_STACKS[key].includes(family),
-      );
-      return { id, family, locals: [family], group: script || "latin" };
-    }
+    if (family) return systemFontChoice(family);
   }
   if (id?.startsWith("cdn:")) {
     const script = id.slice(4);
@@ -487,11 +785,14 @@ export function cjkStack(primary: CjkFace = "jp"): string {
   return systemStack(primary);
 }
 
+function scriptFromChoiceGroup(group: FontChoice["group"]): ScriptId | null {
+  return group === "latin" || isCjkFace(group) ? group : null;
+}
+
 export function cssFontFamily(fontId: string | undefined, detected: ScriptId | null): string {
   const choice = fontChoice(fontId);
   const fallback: ScriptId =
-    detected ||
-    (choice.group !== "auto" ? choice.group : "latin");
+    detected || scriptFromChoiceGroup(choice.group) || "latin";
   const stack = systemStack(fallback);
   if (choice.id === "auto") return stack;
   return `"${choice.family}", ${stack}`;

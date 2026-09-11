@@ -1,14 +1,19 @@
 "use client";
 
-import { useMemo, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import {
-  availableFontChoiceIds,
+  BOOK_LANGUAGES,
   bookFontChoice,
   fontChoice,
-  pickUsedFontFamily,
-  preferredFontGroups,
   fontDisplayName,
+  fontGroupsForBookLanguage,
+  listSystemFontChoices,
+  pickUsedFontFamily,
+  resolvedBookScript,
   SCRIPT_GROUP_LABELS,
+  showsAllBookFonts,
+  type BookLanguage,
+  type FontGroup,
   type ScriptId,
 } from "@/lib/fonts";
 import {
@@ -26,6 +31,7 @@ const FONT_GROUP_KEYS: Record<string, MessageKey> = {
   jp: "fontGroupJp",
   tc: "fontGroupTc",
   sc: "fontGroupSc",
+  other: "fontGroupOther",
 };
 
 type BookWriting = {
@@ -39,8 +45,10 @@ type Props = {
   onChange: (patch: Partial<PersistSettings>, refreshPreview?: boolean) => void;
   bookWriting: BookWriting | null;
   bookScript?: ScriptId | null;
+  bookLanguage?: BookLanguage;
   bookFontId?: string;
   onBookWritingChange: (mode: WritingMode) => void;
+  onBookLanguageChange: (language: BookLanguage) => void;
   onBookFontChange: (fontId: string) => void;
   bookIsTxt?: boolean;
   bookIsPdf?: boolean;
@@ -72,6 +80,31 @@ function groupLabel(id: string, locale: Locale): string {
   return SCRIPT_GROUP_LABELS[id] || id;
 }
 
+function languageLabel(id: BookLanguage | ScriptId, locale: Locale): string {
+  if (id === "latin") return t("languageEnglish", undefined, locale);
+  if (id === "other") return t("languageOther", undefined, locale);
+  if (id === "auto") return t("auto", undefined, locale);
+  return groupLabel(id, locale);
+}
+
+function languageDesc(
+  book: BookWriting | null,
+  language: BookLanguage,
+  detected: ScriptId | null,
+  locale: Locale,
+): string {
+  if (!book) return t("writingDetectOnDrop", undefined, locale);
+  if (language === "auto" && book.axis == null && !detected) {
+    return t("writingDetecting", undefined, locale);
+  }
+  if (language === "auto") {
+    const live = detected ? languageLabel(detected, locale) : t("languageOther", undefined, locale);
+    return t("writingThisBook", { mode: live }, locale);
+  }
+  if (!detected) return t("writingOverride", undefined, locale);
+  return t("writingOverrideDetected", { mode: languageLabel(detected, locale) }, locale);
+}
+
 function clientSnapshot() {
   return true;
 }
@@ -84,7 +117,7 @@ function subscribeNoop() {
   return () => {};
 }
 
-function withCurrentFont(groups: ReturnType<typeof preferredFontGroups>, fontId: string) {
+function withCurrentFont(groups: FontGroup[], fontId: string) {
   if (fontId === "auto" || groups.some((g) => g.choiceIds.includes(fontId))) return groups;
   const choice = fontChoice(fontId);
   const match = groups.find((g) => g.id === choice.group);
@@ -117,8 +150,10 @@ export function SettingsPanel({
   onChange,
   bookWriting,
   bookScript = null,
+  bookLanguage = "auto",
   bookFontId = "auto",
   onBookWritingChange,
+  onBookLanguageChange,
   onBookFontChange,
   bookIsTxt = false,
   bookIsPdf = false,
@@ -132,23 +167,30 @@ export function SettingsPanel({
   const vertical = bookWriting?.axis === "vertical";
   const writingLocked = !bookWriting || writingDisabled;
   const fontLocked = !bookWriting || writingDisabled;
-  const installedIds = useMemo(
-    () => (isClient ? availableFontChoiceIds() : null),
-    [isClient],
-  );
+  const showAllFonts = showsAllBookFonts(bookLanguage, bookScript);
+  const [systemIds, setSystemIds] = useState<string[]>([]);
+  useEffect(() => {
+    if (!isClient || !showAllFonts) return;
+    let cancelled = false;
+    void listSystemFontChoices().then((choices) => {
+      if (!cancelled) setSystemIds(choices.map((choice) => choice.id));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isClient, showAllFonts]);
+  const resolvedScript = resolvedBookScript(bookLanguage, bookScript);
   const fontGroups = useMemo(() => {
-    const groups = preferredFontGroups(
-      undefined,
-      isClient ? navigator.language : undefined,
+    const groups = fontGroupsForBookLanguage(
+      bookLanguage,
       bookScript,
-      installedIds,
+      null,
+      undefined,
+      showAllFonts ? systemIds : null,
     );
     return withCurrentFont(groups, bookFontId);
-  }, [bookScript, installedIds, bookFontId, isClient]);
-  const autoFamily =
-    isClient && bookScript
-      ? pickUsedFontFamily("auto", bookScript)
-      : "";
+  }, [bookLanguage, bookScript, bookFontId, showAllFonts, systemIds]);
+  const autoFamily = isClient ? pickUsedFontFamily("auto", resolvedScript) : "";
 
   return (
     <aside className="card">
@@ -185,6 +227,32 @@ export function SettingsPanel({
       <>
       <div className="setting-row">
         <div>
+          <div className="setting-title">{t("bookLanguage", undefined, locale)}</div>
+          <div className="setting-desc">
+            {languageDesc(bookWriting, bookLanguage, bookScript, locale)}
+          </div>
+        </div>
+        <select
+          className="field"
+          value={bookLanguage}
+          onChange={(e) => {
+            const next = e.target.value as BookLanguage;
+            if (showsAllBookFonts(next, bookScript)) void listSystemFontChoices();
+            onBookLanguageChange(next);
+          }}
+        >
+          {BOOK_LANGUAGES.map((id) => (
+            <option key={id} value={id}>
+              {id === "auto" && bookScript
+                ? `${t("auto", undefined, locale)} · ${languageLabel(bookScript, locale)}`
+                : languageLabel(id, locale)}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="setting-row">
+        <div>
           <div className="setting-title">{t("font", undefined, locale)}</div>
           <div className="setting-desc">
             {fontDesc(bookWriting, bookFontId, autoFamily, locale)}
@@ -193,7 +261,6 @@ export function SettingsPanel({
         <select
           className="field"
           value={bookFontId}
-          disabled={fontLocked}
           onChange={(e) => onBookFontChange(e.target.value)}
         >
           {fontGroups.map((group) => {

@@ -15,6 +15,8 @@ const job = createJob(file, converter, "job-1", "detecting");
 assert.equal(job.choice, "auto");
 assert.equal(job.axis, null);
 assert.equal(job.sniffedAxis, null);
+assert.equal(job.bookLanguage, "auto");
+assert.equal(job.fontId, "auto");
 
 state = jobsReducer(state, { type: "add", jobs: [job], selectFirst: true });
 assert.equal(state.jobs.length, 1);
@@ -42,6 +44,16 @@ assert.equal(state.jobs[0].result, null);
 state = jobsReducer(state, { type: "choice", id: "job-1", choice: "auto", message: "reconvert" });
 assert.equal(state.jobs[0].choice, "auto");
 assert.equal(state.jobs[0].axis, "horizontal");
+
+state = jobsReducer(state, {
+  type: "patch",
+  id: "job-1",
+  patch: { bookLanguage: "other", fontId: "georgia" },
+  message: "reconvert",
+});
+assert.equal(state.jobs[0].bookLanguage, "other");
+assert.equal(state.jobs[0].fontId, "georgia");
+assert.equal(state.jobs[0].status, "queued");
 
 state = jobsReducer(state, {
   type: "done",

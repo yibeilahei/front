@@ -5,7 +5,7 @@
 
 import { downloadBytes, downloadJobs } from "./download";
 import { axisFromSample } from "../detectVertical";
-import { pickUsedFontFamily } from "../fonts";
+import { pickUsedFontFamily, resolvedBookScript } from "../fonts";
 import { t } from "../i18n";
 import { pendingJobs, type JobAction, type JobState } from "./store";
 import { formatDuration, formatSize, toConvertSettings } from "../settings";
@@ -96,12 +96,20 @@ export async function runConvertQueue(
     if (!host.getState().activeId) host.dispatch({ type: "select", id: job.id });
     const axis = await ensureAxis(job, host.dispatch);
     const settings = host.getSettings();
+    const script = resolvedBookScript(job.bookLanguage, job.detectedScript);
+    const scriptOverride =
+      job.bookLanguage === "latin" ||
+      job.bookLanguage === "jp" ||
+      job.bookLanguage === "sc" ||
+      job.bookLanguage === "tc"
+        ? job.bookLanguage
+        : undefined;
     const usedSettings = {
       deviceId: settings.deviceId,
       fontId: job.fontId,
       fontFamily: pickUsedFontFamily(
         job.fontId,
-        job.detectedScript || (axis === "vertical" ? "jp" : null),
+        script || (axis === "vertical" ? "jp" : null),
       ),
       fontSize: settings.fontSize,
       lineHeight: settings.lineHeight,
@@ -114,25 +122,29 @@ export async function runConvertQueue(
       axis,
     });
     try {
-      const result = await job.converter.convert(job.file, toConvertSettings(settings, axis, job.fontId, job.txtEncoding), {
-        signal,
-        maxPages: opts.maxPages,
-        onStatus: host.onStatus,
-        onProgress: (p, currentPage, total) => {
-          const overallFrac = (i + p) / pending.length;
-          const remainingMs = estimateRemainingMs(now() - queueStart, overallFrac);
-          const eta = remainingMs != null ? " · " + t("etaRemaining", { time: formatDuration(remainingMs) }) : "";
-          host.onProgress(
-            overallFrac * 100,
-            t("pageProgress", { name: job.file.name, current: currentPage, total }) + eta,
-          );
-          host.dispatch({
-            type: "progress",
-            id: job.id,
-            message: t("pageShort", { current: currentPage, total }),
-          });
+      const result = await job.converter.convert(
+        job.file,
+        toConvertSettings(settings, axis, job.fontId, job.txtEncoding, scriptOverride),
+        {
+          signal,
+          maxPages: opts.maxPages,
+          onStatus: host.onStatus,
+          onProgress: (p, currentPage, total) => {
+            const overallFrac = (i + p) / pending.length;
+            const remainingMs = estimateRemainingMs(now() - queueStart, overallFrac);
+            const eta = remainingMs != null ? " · " + t("etaRemaining", { time: formatDuration(remainingMs) }) : "";
+            host.onProgress(
+              overallFrac * 100,
+              t("pageProgress", { name: job.file.name, current: currentPage, total }) + eta,
+            );
+            host.dispatch({
+              type: "progress",
+              id: job.id,
+              message: t("pageShort", { current: currentPage, total }),
+            });
+          },
         },
-      });
+      );
       doneCount += 1;
       lastFilename = result.filename;
       host.dispatch({

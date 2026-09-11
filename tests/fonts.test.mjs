@@ -1,21 +1,29 @@
 import assert from "node:assert/strict";
 import {
   availableFontChoiceIds,
+  BOOK_LANGUAGES,
   FONT_CHOICES,
   FONT_GROUPS,
   fontDisplayName,
+  fontGroupsForBookLanguage,
   listBookFontChoices,
+  normalizeBookLanguage,
   normalizeFontId,
   pickUsedFontFamily,
   preferredFontGroups,
+  resolvedBookScript,
+  showsAllBookFonts,
 } from "../src/lib/fonts.ts";
 
 assert.equal(normalizeFontId("times"), "auto");
 assert.equal(normalizeFontId("ms-mincho"), "auto");
 assert.equal(normalizeFontId("lisong"), "auto");
-assert.equal(normalizeFontId("pmingliu"), "auto");
-assert.equal(normalizeFontId("simsun"), "auto");
 assert.equal(normalizeFontId("fangsong"), "auto");
+assert.equal(normalizeFontId("pmingliu"), "pmingliu");
+assert.equal(normalizeFontId("simsun"), "simsun");
+assert.equal(normalizeFontId("iowan"), "iowan");
+assert.equal(normalizeFontId("sys:Arial"), "sys:Arial");
+assert.equal(normalizeFontId("unknown-face"), "auto");
 assert.equal(fontDisplayName("Hiragino Mincho ProN", "en"), "Hiragino Mincho ProN");
 assert.equal(fontDisplayName("Hiragino Mincho ProN", "ja"), "ヒラギノ明朝 ProN");
 assert.equal(fontDisplayName("Hiragino Mincho ProN W6", "ja"), "ヒラギノ明朝 ProN W6");
@@ -44,12 +52,16 @@ assert.ok(
 assert.equal(new Set(listed.filter((c) => c.group === "tc").map((c) => c.family)).size, listed.filter((c) => c.group === "tc").length);
 assert.equal(new Set(listed.filter((c) => c.group === "sc").map((c) => c.family)).size, listed.filter((c) => c.group === "sc").length);
 
-assert.deepEqual(FONT_GROUPS.find((g) => g.id === "latin")?.choiceIds, ["georgia", "literata", "palatino"]);
-assert.deepEqual(FONT_GROUPS.find((g) => g.id === "jp")?.choiceIds, ["hiragino", "yu-mincho", "noto-jp"]);
-assert.deepEqual(FONT_GROUPS.find((g) => g.id === "tc")?.choiceIds, ["songti-tc", "noto-tc"]);
-assert.deepEqual(FONT_GROUPS.find((g) => g.id === "sc")?.choiceIds, ["songti-sc", "noto-sc"]);
+assert.equal(FONT_GROUPS.find((g) => g.id === "latin")?.choiceIds.length, 6);
+assert.equal(FONT_GROUPS.find((g) => g.id === "jp")?.choiceIds.length, 6);
+assert.equal(FONT_GROUPS.find((g) => g.id === "tc")?.choiceIds.length, 6);
+assert.equal(FONT_GROUPS.find((g) => g.id === "sc")?.choiceIds.length, 6);
+assert.deepEqual(FONT_GROUPS.find((g) => g.id === "latin")?.choiceIds, ["georgia", "literata", "palatino", "cambria", "iowan", "charter"]);
+assert.deepEqual(FONT_GROUPS.find((g) => g.id === "jp")?.choiceIds, ["hiragino", "yu-mincho", "yu-mincho-demibold", "hgs-mincho", "biz-mincho", "noto-jp"]);
+assert.deepEqual(FONT_GROUPS.find((g) => g.id === "tc")?.choiceIds, ["songti-tc", "noto-tc", "pmingliu", "source-han-tc", "heiti-tc", "pingfang-tc"]);
+assert.deepEqual(FONT_GROUPS.find((g) => g.id === "sc")?.choiceIds, ["songti-sc", "noto-sc", "simsun", "source-han-sc", "heiti-sc", "pingfang-sc"]);
+assert.ok(!FONT_CHOICES.some((c) => ["times", "baskerville", "ms-mincho", "yu-mincho-36", "toppan-mincho", "lisong", "biaukai", "fangsong"].includes(c.id)));
 assert.equal(FONT_CHOICES.find((c) => c.id === "hiragino")?.locals[0], "Hiragino Mincho ProN W6");
-assert.ok(!FONT_CHOICES.some((c) => ["times", "ms-mincho", "lisong", "pmingliu", "simsun", "fangsong"].includes(c.id)));
 
 const installed = [
   "auto",
@@ -116,5 +128,49 @@ assert.ok(scBook.find((g) => g.id === "sc")?.choiceIds.includes("songti-sc"));
 
 const zhCnBrowser = preferredFontGroups(undefined, "zh-CN", null, installed);
 assert.equal(zhCnBrowser[1].id, "sc");
+
+assert.deepEqual(BOOK_LANGUAGES, ["auto", "latin", "jp", "sc", "tc", "other"]);
+assert.equal(normalizeBookLanguage("other"), "other");
+assert.equal(normalizeBookLanguage("kr"), "auto");
+assert.equal(resolvedBookScript("auto", "jp"), "jp");
+assert.equal(resolvedBookScript("tc", "jp"), "tc");
+assert.equal(resolvedBookScript("other", "jp"), "jp");
+assert.equal(resolvedBookScript("other", null), null);
+assert.equal(showsAllBookFonts("other", "jp"), true);
+assert.equal(showsAllBookFonts("auto", "jp"), false);
+assert.equal(showsAllBookFonts("auto", null), true);
+assert.equal(showsAllBookFonts("jp", "jp"), false);
+assert.equal(showsAllBookFonts("latin", null), false);
+
+const recJp = fontGroupsForBookLanguage("jp", "latin", installed);
+assert.deepEqual(recJp.map((g) => g.id), ["auto", "jp"]);
+assert.equal(recJp.find((g) => g.id === "jp")?.choiceIds.length, 6);
+assert.ok(recJp.find((g) => g.id === "jp")?.choiceIds.includes("hiragino"));
+assert.ok(!recJp.some((g) => g.id === "latin"));
+assert.ok(!recJp.some((g) => g.id === "tc"));
+
+const recEn = fontGroupsForBookLanguage("latin", "jp", installed);
+assert.deepEqual(recEn.map((g) => g.id), ["auto", "latin"]);
+assert.equal(recEn.find((g) => g.id === "latin")?.choiceIds.length, 6);
+
+const recSc = fontGroupsForBookLanguage("sc", "jp", installed);
+assert.deepEqual(recSc.map((g) => g.id), ["auto", "sc"]);
+assert.equal(recSc.find((g) => g.id === "sc")?.choiceIds.length, 6);
+const recTc = fontGroupsForBookLanguage("tc", null, installed);
+assert.deepEqual(recTc.map((g) => g.id), ["auto", "tc"]);
+assert.equal(recTc.find((g) => g.id === "tc")?.choiceIds.length, 6);
+
+const recAutoJp = fontGroupsForBookLanguage("auto", "jp", installed);
+assert.deepEqual(recAutoJp.map((g) => g.id), ["auto", "jp"]);
+assert.equal(recAutoJp.find((g) => g.id === "jp")?.choiceIds.length, 6);
+
+const allOther = fontGroupsForBookLanguage("other", "jp", installed);
+assert.deepEqual(allOther.map((g) => g.id), ["auto"]);
+const allOtherLoaded = fontGroupsForBookLanguage("other", "jp", installed, undefined, ["sys:Arial", "sys:Georgia"]);
+assert.deepEqual(allOtherLoaded.map((g) => g.id), ["auto", "other"]);
+assert.deepEqual(allOtherLoaded.find((g) => g.id === "other")?.choiceIds, ["sys:Arial", "sys:Georgia"]);
+
+const allUnknown = fontGroupsForBookLanguage("auto", null, installed);
+assert.deepEqual(allUnknown.map((g) => g.id), ["auto"]);
 
 console.log("fonts tests passed");

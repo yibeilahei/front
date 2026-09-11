@@ -1,3 +1,4 @@
+import type { ScriptId } from "./fonts";
 import type { DeviceProfile, PersistSettings, ConvertSettings, ResolvedWritingMode } from "./types";
 
 export const SETTINGS_KEY = "lazahata.xtch.settings.v1";
@@ -49,6 +50,7 @@ export function toConvertSettings(
   writingMode: ResolvedWritingMode,
   fontId?: string,
   txtEncoding?: string,
+  script?: ScriptId | null,
 ): ConvertSettings {
   const device = DEVICE_PROFILES[settings.deviceId] || DEVICE_PROFILES.X4;
   return {
@@ -57,6 +59,7 @@ export function toConvertSettings(
     writingMode,
     txtEncoding: txtEncoding || "auto",
     device: { w: device.width, h: device.height, id: device.id },
+    script,
   };
 }
 

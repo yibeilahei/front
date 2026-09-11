@@ -84,6 +84,7 @@ async function sessionFromBook(
   onStatus?: StatusFn,
   opts?: { maxPages?: number; titleFallback?: string; file?: File },
 ): Promise<BookSession> {
+  if (settings.script) book.script = settings.script;
   const { w, h } = settings.device;
   const kind = pagerKind(settings.writingMode);
   if (kind === "vertical") {
