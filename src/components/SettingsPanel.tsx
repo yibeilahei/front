@@ -24,6 +24,11 @@ import {
   type TxtEncodingId,
 } from "@/lib/adapters/txt";
 import { DEFAULT_LOCALE, detectLocale, t, type Locale, type MessageKey } from "@/lib/i18n";
+import {
+  FONT_SIZE_MAX_PT,
+  FONT_SIZE_MIN_PT,
+  FONT_SIZE_STEP_PT,
+} from "@/lib/settings";
 import type { PersistSettings, ResolvedWritingMode, WritingMode } from "@/lib/types";
 
 const FONT_GROUP_KEYS: Record<string, MessageKey> = {
@@ -51,7 +56,6 @@ type Props = {
   onBookLanguageChange: (language: BookLanguage) => void;
   onBookFontChange: (fontId: string) => void;
   bookIsTxt?: boolean;
-  bookIsPdf?: boolean;
   txtEncoding?: string;
   detectedEncoding?: string | null;
   onTxtEncodingChange?: (encoding: string) => void;
@@ -156,7 +160,6 @@ export function SettingsPanel({
   onBookLanguageChange,
   onBookFontChange,
   bookIsTxt = false,
-  bookIsPdf = false,
   txtEncoding = "auto",
   detectedEncoding = null,
   onTxtEncodingChange,
@@ -221,10 +224,6 @@ export function SettingsPanel({
         </div>
       </div>
 
-      {bookIsPdf ? <p className="note">{t("pdfAsIs", undefined, locale)}</p> : null}
-
-      {bookIsPdf ? null : (
-      <>
       <div className="setting-row">
         <div>
           <div className="setting-title">{t("bookLanguage", undefined, locale)}</div>
@@ -334,13 +333,14 @@ export function SettingsPanel({
       <div className="setting-row">
         <div>
           <div className="setting-title">{t("fontSize", undefined, locale)}</div>
+          <div className="setting-desc">{t("fontSizeHint", undefined, locale)}</div>
         </div>
         <div className="range-wrap">
           <input
             type="range"
-            min={20}
-            max={56}
-            step={1}
+            min={FONT_SIZE_MIN_PT}
+            max={FONT_SIZE_MAX_PT}
+            step={FONT_SIZE_STEP_PT}
             disabled={writingDisabled}
             value={settings.fontSize}
             onChange={(e) => onChange({ fontSize: Number(e.target.value) })}
@@ -348,7 +348,7 @@ export function SettingsPanel({
             onTouchEnd={() => onChange({}, true)}
             onKeyUp={() => onChange({}, true)}
           />
-          <span className="range-val">{settings.fontSize}</span>
+          <span className="range-val">{settings.fontSize} pt</span>
         </div>
       </div>
 
@@ -437,8 +437,6 @@ export function SettingsPanel({
           </button>
         </div>
       </div>
-      </>
-      )}
 
       <div className="setting-row">
         <div>
@@ -471,7 +469,7 @@ export function SettingsPanel({
         </label>
       </div>
 
-      {bookIsPdf ? null : <p className="note">{t("note", undefined, locale)}</p>}
+      <p className="note">{t("note", undefined, locale)}</p>
     </aside>
   );
 }

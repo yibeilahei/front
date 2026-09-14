@@ -13,6 +13,7 @@ import {
   type CjkFace,
 } from "../fonts";
 import { t } from "../i18n";
+import { fontPixels } from "../settings";
 import {
   capPageCount,
   loadIframe,
@@ -25,6 +26,7 @@ import {
   clusterColumns,
   columnPitch,
   fallbackPageWindows,
+  hanmen,
   packColumnPages,
   type ColumnRect,
 } from "./verticalPages";
@@ -67,9 +69,10 @@ function bookCss(
   h: number,
   primary: CjkFace,
 ): string {
-  const fontSize = Number(settings.fontSize) || 34;
+  const fontSize = fontPixels(settings.fontSize, settings.device.ppi);
   const lineHeight = (Number(settings.lineHeight) || 100) / 100;
-  const pitch = columnPitch(w, fontSize, lineHeight);
+  const pitch = columnPitch(fontSize, lineHeight);
+  const { usedW, padRight } = hanmen(w, pitch);
   const align = textAlignCss(Number(settings.textAlign));
   // CSS columns + vertical-rl overlap glyphs (especially ruby) in Blink and
   // hang html-to-image in WebKit. Native tategaki: wrap at height, grow left.
@@ -93,8 +96,8 @@ function bookCss(
     .lz-clip {
       position: absolute;
       top: 0;
-      right: 0;
-      width: ${w}px;
+      right: ${padRight}px;
+      width: ${usedW}px;
       height: ${h}px;
       overflow: hidden;
     }
@@ -327,17 +330,18 @@ function pageWindowsOf(
   void clip.offsetHeight;
 
   const clipRight = clip.getBoundingClientRect().right;
+  const { usedW } = hanmen(pageW, pitch);
   const columns = clusterColumns(collectColumnRects(flow), pitch);
   if (columns.length) {
-    const packed = packColumnPages(columns, Math.max(1, pageW), clipRight);
+    const packed = packColumnPages(columns, Math.max(1, usedW), clipRight);
     return packed.slice(0, capPageCount(packed.length)).map((page) => ({
       shift: page.shift,
       axis: "x" as const,
       width: page.width,
     }));
   }
-  const totalWidth = Math.max(flow.scrollWidth, clip.scrollWidth, pageW);
-  const fallback = fallbackPageWindows(totalWidth, pageW);
+  const totalWidth = Math.max(flow.scrollWidth, clip.scrollWidth, usedW);
+  const fallback = fallbackPageWindows(totalWidth, usedW);
   return fallback.slice(0, capPageCount(fallback.length)).map((page) => ({
     shift: page.shift,
     axis: "x" as const,
@@ -370,7 +374,10 @@ export async function createVerticalPager(
   usedFontFamily: string;
 }> {
   const { w, h } = settings.device;
-  const pitch = columnPitch(w, Number(settings.fontSize) || 34, (Number(settings.lineHeight) || 100) / 100);
+  const pitch = columnPitch(
+    fontPixels(settings.fontSize, settings.device.ppi),
+    (Number(settings.lineHeight) || 100) / 100,
+  );
   if (onStatus) onStatus(t("openingFoliate"));
   const cjkFace: CjkFace | null = isCjkFace(book.script)
     ? book.script

@@ -7,6 +7,7 @@
 
 import { cssFontFamily, pickUsedFontFamily, systemFontFaceCss, type ScriptId } from "../fonts";
 import { t } from "../i18n";
+import { fontPixels } from "../settings";
 import { normalizeRuby } from "./sanitizeHtml";
 import { capPageCount, loadIframe, pagerHostCss, snapshotViewport, waitFrame } from "./snapshot";
 import type { Book, ConvertSettings, DocumentInfo, StatusFn, TocEntry, VerticalPager } from "../types";
@@ -36,7 +37,7 @@ function textAlignCss(align: number): string {
 }
 
 function bookCss(settings: ConvertSettings, fontCss: string, w: number, h: number, script: ScriptId | null): string {
-  const fontSize = Number(settings.fontSize) || 34;
+  const fontSize = fontPixels(settings.fontSize, settings.device.ppi);
   const lineHeight = (Number(settings.lineHeight) || 100) / 100;
   const align = textAlignCss(Number(settings.textAlign));
   return `

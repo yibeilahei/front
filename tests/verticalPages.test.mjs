@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { clusterColumns, packColumnPages, fallbackPageWindows, columnPitch, RUBY_OVERHANG_EM } from "../src/lib/pagers/verticalPages.ts";
+import { clusterColumns, packColumnPages, fallbackPageWindows, columnPitch, hanmen, RUBY_GUTTER_EM } from "../src/lib/pagers/verticalPages.ts";
 
 function assertNoColumnCut(columns, pages, clipRight) {
   for (const page of pages) {
@@ -118,12 +118,36 @@ function assertNoColumnCut(columns, pages, clipRight) {
   assert.deepEqual(pages, [{ shift: 0, width: 456 }]);
 }
 
-// Glyph + 0.55em ruby on one side (9 columns on X4). Not 2× half-leading.
+// Lazahata pitch: 1em + 0.5em ruby, leftover centered (not spread into columns).
 {
-  assert.equal(RUBY_OVERHANG_EM, 0.55);
-  const pitch = columnPitch(480, 34, 1.2);
-  assert.equal(pitch, 480 / 9);
-  assert.ok(pitch >= 34 * (1 + RUBY_OVERHANG_EM) - 0.5);
+  assert.equal(RUBY_GUTTER_EM, 0.5);
+  assert.equal(columnPitch(34, 1.2), 51);
+  assert.equal(columnPitch(34, 1.6), 34 * 1.6);
+  const box = hanmen(480, 51);
+  assert.equal(box.nCols, 9);
+  assert.equal(box.usedW, 459);
+  assert.equal(box.padLeft, 10);
+  assert.equal(box.padRight, 11);
+}
+
+// 12pt @ X4: 36.5px em → 8 × 54.75px, 21px pad each side.
+{
+  const pitch = columnPitch(36.5, 1);
+  assert.equal(pitch, 54.75);
+  const box = hanmen(480, pitch);
+  assert.equal(box.nCols, 8);
+  assert.equal(box.usedW, 438);
+  assert.equal(box.padLeft, 21);
+  assert.equal(box.padRight, 21);
+}
+
+// LayoutTests.testFullPageGridIsCentered: 10px em, 15px pitch, 104px page.
+{
+  const box = hanmen(104, 15);
+  assert.equal(box.nCols, 6);
+  assert.equal(box.usedW, 90);
+  assert.equal(box.padLeft, 7);
+  assert.equal(box.padRight, 7);
 }
 
 {

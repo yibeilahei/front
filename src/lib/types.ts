@@ -5,7 +5,6 @@
  * pager by writing mode, not file type. XTCH encoding does not change.
  *
  * EPUB / TXT / MOBI / FB2 are wired. Horizontal uses the 横書き pager.
- * PDF is rasterized as-is (no reflow pager); pages are fitted to the panel.
  */
 
 import type { BookLanguage, ScriptId } from "./fonts";
@@ -67,6 +66,8 @@ export type DeviceProfile = {
   id: string;
   width: number;
   height: number;
+  /** Panel pixels per inch. X4 = 219, X3 = 259. */
+  ppi: number;
   label: string;
 };
 
@@ -83,12 +84,13 @@ export type WritingMode = "auto" | "horizontal" | "vertical";
 export type ResolvedWritingMode = "horizontal" | "vertical";
 
 /**
- * Planned adapters. EPUB, TXT, MOBI, FB2, and PDF are registered.
+ * Planned adapters. EPUB, TXT, MOBI, and FB2 are registered.
  */
-export type AdapterId = "epub" | "txt" | "mobi" | "fb2" | "pdf";
+export type AdapterId = "epub" | "txt" | "mobi" | "fb2";
 
 export type PersistSettings = {
   deviceId: string;
+  /** Body size in typographic points (1/72 inch), same as iOS pt. */
   fontSize: number;
   lineHeight: number;
   textAlign: number;
@@ -98,7 +100,7 @@ export type PersistSettings = {
 };
 
 export type ConvertSettings = PersistSettings & {
-  device: { w: number; h: number; id: string };
+  device: { w: number; h: number; id: string; ppi: number };
   /** Resolved axis only. Auto is never passed into a pager. */
   writingMode: ResolvedWritingMode;
   fontId: string;

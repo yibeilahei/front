@@ -9,6 +9,7 @@
 import { toCanvas } from "html-to-image";
 import { systemFontFaceCss } from "../fonts";
 import { t } from "../i18n";
+import { SNAP_SCALE, downsampleRgba } from "./downsample";
 import { glyphNeedsSidewaysRotate } from "./uprightChar";
 import {
   cssQuotedContent,
@@ -24,7 +25,6 @@ import {
 
 const systemCss = systemFontFaceCss();
 const MAX_SECTION_PAGES = 5000;
-const SNAP_SCALE = 3; // matches Cookbook's default 3× raster
 
 export function isWebKitEngine(): boolean {
   if (typeof navigator === "undefined") return false;
@@ -110,7 +110,7 @@ function timeoutMs<T>(ms: number, message: string): Promise<T> {
 }
 
 async function htmlToImageSnapshot(vp: HTMLElement, w: number, h: number): Promise<Uint8ClampedArray> {
-  const canvas = await toCanvas(vp, {
+  const src = await toCanvas(vp, {
     width: w,
     height: h,
     pixelRatio: SNAP_SCALE,
@@ -119,14 +119,13 @@ async function htmlToImageSnapshot(vp: HTMLElement, w: number, h: number): Promi
     fontEmbedCSS: systemCss,
     skipAutoScale: true,
   });
-  const out = outputCanvas(w, h);
-  const outCtx = out.getContext("2d", { willReadFrequently: true });
-  if (!outCtx) throw new Error(t("snapshotFailed"));
-  outCtx.imageSmoothingEnabled = true;
-  outCtx.imageSmoothingQuality = "high";
-  outCtx.clearRect(0, 0, w, h);
-  outCtx.drawImage(canvas, 0, 0, w, h);
-  return new Uint8ClampedArray(outCtx.getImageData(0, 0, w, h).data);
+  const canvas = snapshotCanvas(src.width, src.height);
+  const ctx = opaque2d(canvas);
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.drawImage(src, 0, 0);
+  const hi = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const scale = Math.max(1, Math.round(canvas.width / Math.max(w, 1)));
+  return downsampleRgba(hi.data, canvas.width, canvas.height, scale);
 }
 
 function rectsOverlap(
@@ -156,24 +155,24 @@ function centerInBox(
 }
 
 let snapCanvas: HTMLCanvasElement | null = null;
-let downCanvas: HTMLCanvasElement | null = null;
+
+/** First getContext wins; lock opaque so LCD AA is not stored with an unused A. */
+function opaque2d(canvas: HTMLCanvasElement): CanvasRenderingContext2D {
+  const ctx = canvas.getContext("2d", { alpha: false, willReadFrequently: true });
+  if (!ctx) throw new Error(t("snapshotFailed"));
+  return ctx;
+}
 
 function snapshotCanvas(w: number, h: number): HTMLCanvasElement {
-  if (!snapCanvas) snapCanvas = document.createElement("canvas");
+  if (!snapCanvas) {
+    snapCanvas = document.createElement("canvas");
+    opaque2d(snapCanvas);
+  }
   if (snapCanvas.width !== w || snapCanvas.height !== h) {
     snapCanvas.width = w;
     snapCanvas.height = h;
   }
   return snapCanvas;
-}
-
-function outputCanvas(w: number, h: number): HTMLCanvasElement {
-  if (!downCanvas) downCanvas = document.createElement("canvas");
-  if (downCanvas.width !== w || downCanvas.height !== h) {
-    downCanvas.width = w;
-    downCanvas.height = h;
-  }
-  return downCanvas;
 }
 
 function skipPagerChrome(el: Element): boolean {
@@ -398,11 +397,10 @@ function paintCombinedRun(
 export function rasterizeElement(root: HTMLElement, w: number, h: number): Uint8ClampedArray {
   const scale = SNAP_SCALE;
   const canvas = snapshotCanvas(w * scale, h * scale);
-  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  const ctx = opaque2d(canvas);
   if (!ctx) throw new Error(t("snapshotFailed"));
   ctx.setTransform(scale, 0, 0, scale, 0, 0);
   ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = "high";
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, w, h);
   ctx.save();
@@ -548,14 +546,8 @@ export function rasterizeElement(root: HTMLElement, w: number, h: number): Uint8
 
   ctx.restore();
   ctx.setTransform(1, 0, 0, 1, 0, 0);
-  const out = outputCanvas(w, h);
-  const outCtx = out.getContext("2d", { willReadFrequently: true });
-  if (!outCtx) throw new Error(t("snapshotFailed"));
-  outCtx.imageSmoothingEnabled = true;
-  outCtx.imageSmoothingQuality = "high";
-  outCtx.clearRect(0, 0, w, h);
-  outCtx.drawImage(canvas, 0, 0, w, h);
-  return new Uint8ClampedArray(outCtx.getImageData(0, 0, w, h).data);
+  const hi = ctx.getImageData(0, 0, w * scale, h * scale);
+  return downsampleRgba(hi.data, w * scale, h * scale, scale);
 }
 
 export async function snapshotViewport(

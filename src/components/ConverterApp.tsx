@@ -60,11 +60,15 @@ function paintFrame(
   width: number,
   height: number,
 ) {
+  const cssW = canvas.style.width;
+  const cssH = canvas.style.height;
   if (canvas.width !== width || canvas.height !== height) {
     canvas.width = width;
     canvas.height = height;
+    if (cssW) canvas.style.width = cssW;
+    if (cssH) canvas.style.height = cssH;
   }
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d", { alpha: false });
   if (!ctx) return;
   ctx.putImageData(new ImageData(new Uint8ClampedArray(frame), width, height), 0, 0);
 }
@@ -625,6 +629,7 @@ export function ConverterApp() {
             locale={locale}
             width={(DEVICE_PROFILES[settings.deviceId] || DEVICE_PROFILES.X4).width}
             height={(DEVICE_PROFILES[settings.deviceId] || DEVICE_PROFILES.X4).height}
+            ppi={(DEVICE_PROFILES[settings.deviceId] || DEVICE_PROFILES.X4).ppi}
             canPrev={hasPreview && page > 0}
             canNext={hasPreview && page < pageCount - 1}
             onPrev={() => {
@@ -661,7 +666,6 @@ export function ConverterApp() {
           onBookLanguageChange={updateBookLanguage}
           onBookFontChange={updateBookFont}
           bookIsTxt={activeJob?.converter.id === "txt"}
-          bookIsPdf={activeJob?.converter.id === "pdf"}
           txtEncoding={activeJob?.txtEncoding ?? "auto"}
           detectedEncoding={activeJob?.detectedEncoding ?? null}
           onTxtEncodingChange={updateTxtEncoding}

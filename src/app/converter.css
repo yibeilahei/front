@@ -219,13 +219,21 @@
 .converter .preview-stage {
   display: flex;
   justify-content: center;
+  align-items: center;
   background: #111;
   border-radius: 16px;
   padding: 18px;
 }
 
 .converter .eink {
-  width: min(100%, 240px);
+  /* Size comes from inline width/height (panel px / device ppi × screen ppi).
+     Canvas is position:absolute so its 480×800 bitmap cannot inflate the box. */
+  position: relative;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100%;
   background: #fff;
   padding: 0;
   border-radius: 4px;
@@ -233,24 +241,25 @@
 }
 
 .converter .eink-screen {
-  width: 100%;
-  aspect-ratio: var(--preview-w, 480) / var(--preview-h, 800);
+  position: absolute;
+  inset: 0;
   background: #fff;
   overflow: hidden;
 }
 
 .converter #previewCanvas {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: contain;
   background: #fff;
   image-rendering: auto;
 }
 
 .converter .preview-empty {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -414,7 +423,7 @@
 }
 
 .converter .range-val {
-  min-width: 36px;
+  min-width: 48px;
   text-align: right;
   font-size: 0.8em;
   font-weight: 600;

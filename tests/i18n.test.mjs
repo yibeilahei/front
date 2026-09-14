@@ -31,7 +31,8 @@ assert.equal(t("ledeSuffix", undefined, "zh-Hans"), "");
 assert.equal(t("ledeChrome", undefined, "en"), ". Works best on Chrome");
 assert.equal(t("cookbookLink", undefined, "en"), "Cookbook");
 assert.match(t("cookbookPrefix", undefined, "en"), /slow/);
-assert.match(t("dropTitle", undefined, "en"), /PDF/);
+assert.match(t("dropTitle", undefined, "en"), /EPUB/);
+assert.equal(/PDF/i.test(t("dropTitle", undefined, "en")), false);
 assert.equal(t("books", undefined, "zh-Hant"), "圖書");
 assert.equal(t("books", undefined, "zh-Hans"), "图书");
 

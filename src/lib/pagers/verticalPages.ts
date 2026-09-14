@@ -4,20 +4,32 @@
  * (a <ruby> and its ふりがな) stay on the same page.
  */
 
-/** 0.5em <rt> plus a hair. Counted once: ruby-overhang:none keeps it inside the line box. */
-export const RUBY_OVERHANG_EM = 0.55;
+/** Lazahata body ruby gutter: `rubyW = F * 0.5`, pitch = F + rubyW. */
+export const RUBY_GUTTER_EM = 0.5;
 
 /**
- * Column width for 縦書き. Need room for the glyph plus ふりがな on the over
- * side (1em + 0.55em), but not double that — CSS half-leading on both sides
- * was packing 6 huge columns on X4.
+ * Unstretched 縦書き pitch, same as lazahata: 1em glyph + 0.5em ruby.
+ * Line-height above 150% can widen; leftover width is not spread into pitch.
  */
-export function columnPitch(pageW: number, fontSize: number, lineHeightRatio: number): number {
-  const size = Number(fontSize) || 34;
+export function columnPitch(fontSize: number, lineHeightRatio = 1): number {
+  // Callers pass panel pixels (`pt × ppi / 72`). 36.5 is 12pt at X4 219 ppi.
+  const size = Number(fontSize) > 0 ? Number(fontSize) : 36.5;
   const ratio = Number(lineHeightRatio) || 1;
-  const minPitch = Math.max(size * ratio, size * (1 + RUBY_OVERHANG_EM));
-  const cols = Math.max(1, Math.floor(pageW / Math.max(minPitch, 1)));
-  return pageW / cols;
+  return size * Math.max(1 + RUBY_GUTTER_EM, ratio);
+}
+
+/** Centered 版面: nCols × pitch, leftover split with the extra pixel on the right. */
+export function hanmen(
+  pageW: number,
+  pitch: number,
+): { nCols: number; usedW: number; padLeft: number; padRight: number } {
+  const w = Math.max(1, Number(pageW) || 1);
+  const p = Math.max(1, Number(pitch) || 1);
+  const nCols = Math.max(1, Math.floor(w / p));
+  const usedW = nCols * p;
+  const slack = w - usedW;
+  const padLeft = Math.floor(slack / 2);
+  return { nCols, usedW, padLeft, padRight: slack - padLeft };
 }
 
 export type ColumnRect = { left: number; right: number; group?: string };

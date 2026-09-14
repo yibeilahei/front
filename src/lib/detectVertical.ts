@@ -56,7 +56,7 @@ export function detectedVerticalFromSample(sample: string | null | undefined): b
   return textLooksVertical(sample) || sampleLooksJapanese(sample);
 }
 
-/** Auto from a markup/text sample. Empty → horizontal (PDF / failed sniff). */
+/** Auto from a markup/text sample. Empty → horizontal (failed sniff). */
 export function axisFromSample(sample: string | null | undefined): ResolvedWritingMode {
   return detectedVerticalFromSample(sample) ? "vertical" : "horizontal";
 }

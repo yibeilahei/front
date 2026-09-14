@@ -9,7 +9,7 @@ const nextConfig: NextConfig = {
   output: "export",
   images: { unoptimized: true },
   trailingSlash: true,
-  transpilePackages: ["foliate-js", "pdfjs-dist"],
+  transpilePackages: ["foliate-js"],
   ...(basePath ? { basePath, assetPrefix: basePath } : {}),
 };
 

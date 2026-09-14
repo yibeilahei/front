@@ -1,7 +1,13 @@
 "use client";
 
-import type { RefObject } from "react";
+import { useSyncExternalStore, type CSSProperties, type RefObject } from "react";
 import { t, type Locale } from "@/lib/i18n";
+import {
+  CSS_REFERENCE_PPI,
+  previewCssSize,
+  readCssPixelsPerInch,
+  subscribeCssPixelsPerInch,
+} from "@/lib/previewSize";
 
 type Props = {
   canvasRef: RefObject<HTMLCanvasElement | null>;
@@ -12,6 +18,7 @@ type Props = {
   canNext: boolean;
   width: number;
   height: number;
+  ppi: number;
   onPrev: () => void;
   onNext: () => void;
   locale: Locale;
@@ -26,19 +33,30 @@ export function Preview({
   canNext,
   width,
   height,
+  ppi,
   onPrev,
   onNext,
   locale,
 }: Props) {
+  const cssPpi = useSyncExternalStore(
+    subscribeCssPixelsPerInch,
+    readCssPixelsPerInch,
+    () => CSS_REFERENCE_PPI,
+  );
+  const css = previewCssSize(width, height, ppi, cssPpi);
+  const boxW = `${css.width}px`;
+  const einkStyle = {
+    width: boxW,
+    maxWidth: "100%",
+    aspectRatio: `${width} / ${height}`,
+  } as CSSProperties;
+
   return (
     <section className="card preview-card">
       <h2>{t("preview", undefined, locale)}</h2>
       <div className="preview-stage">
-        <div className="eink">
-          <div
-            className="eink-screen"
-            style={{ aspectRatio: `${width} / ${height}` }}
-          >
+        <div className="eink" style={einkStyle}>
+          <div className="eink-screen">
             {!hasPreview ? (
               <div className="preview-empty">{t("previewEmpty", undefined, locale)}</div>
             ) : null}
@@ -47,7 +65,7 @@ export function Preview({
               id="previewCanvas"
               width={width}
               height={height}
-              style={{ display: hasPreview ? "block" : "none" }}
+              style={{ visibility: hasPreview ? "visible" : "hidden" }}
             />
           </div>
         </div>
