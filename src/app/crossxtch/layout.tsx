@@ -2,8 +2,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "lazahata — crossxtch",
-  description:
-    "Xteink X3 / X4 向けのオープンソース XTCH リーダーです。",
+  description: "ブラウザから Xteink X3 / X4 に crossxtch を書き込みます。",
 };
 
 export default function CrossxtchLayout({

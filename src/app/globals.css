@@ -284,6 +284,137 @@ header.hero h1 a:hover {
   color: var(--font-color);
 }
 
+.flasher .seg {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.flasher .seg button {
+  font-family: inherit;
+  border: 1px solid var(--border-color);
+  background: transparent;
+  color: var(--font-color);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.95em;
+  font-weight: 600;
+  padding: 8px 14px;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.flasher .seg button span {
+  color: var(--label-color);
+  font-weight: 500;
+  font-size: 0.85em;
+}
+
+.flasher .seg button.active {
+  background: var(--accent-color);
+  border-color: var(--accent-color);
+  color: var(--btn-fg);
+}
+
+.flasher .seg button.active span {
+  color: var(--btn-fg);
+  opacity: 0.75;
+}
+
+.flasher .seg button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.flash-field {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin: 4px 0 14px;
+}
+
+.flash-label {
+  font-size: 0.85em;
+  font-weight: 600;
+  color: var(--label-color);
+}
+
+.flash-release {
+  margin: 0 0 16px;
+  color: var(--label-color);
+  font-variant-numeric: tabular-nums;
+}
+
+.file-btn {
+  position: relative;
+}
+
+.file-btn input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.file-btn.is-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.flash-status {
+  margin-top: 16px;
+}
+
+.flash-status p {
+  margin: 8px 0 0;
+  color: var(--label-color);
+  font-variant-numeric: tabular-nums;
+}
+
+.flash-bar {
+  height: 6px;
+  border-radius: 999px;
+  background: var(--hover-fill);
+  overflow: hidden;
+}
+
+.flash-bar-fill {
+  height: 100%;
+  background: var(--accent-color);
+}
+
+.flash-error,
+.flash-ok {
+  margin: 16px 0 0;
+}
+
+.flash-error {
+  color: var(--danger);
+}
+
+.flash-error span {
+  display: block;
+  margin-top: 4px;
+  color: var(--label-color);
+  font-size: 0.9em;
+}
+
+.flash-sd {
+  margin-top: 16px;
+  margin-bottom: 0;
+}
+
 footer.site-foot {
   margin-top: 32px;
   text-align: center;
